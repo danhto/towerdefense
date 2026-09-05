@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-05 — Local DX + GitHub Actions automation
+
+- Goal touched: T4–T8 foundations; G0→G1 scaffold; deploy path
+- Change: Vite + Phaser 3 + TypeScript app; daily seed / attempts / economy / lives / ads / share modules with Vitest; Playwright smoke; `ci.yml` + `deploy.yml` (Pages); `docs/engineering.md` + platform lock
+- Regression pack: PASS — lint, typecheck, 16 unit tests, build, e2e smoke
+- Metrics before → after: N/A → automated T5/T6/T7/T8 unit coverage online
+- Alignment audit: PASS — web-first PWA + Pages matches easy local/prod goal; Capacitor deferred
+- Next action: G1 playable core loop (place towers, waves) against gate checklist
+
 ### 2026-09-05 — Testing & metrics guidelines authored
 
 - Goal touched: G0 docs alignment (enables all P/T gates)

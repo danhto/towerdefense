@@ -1,6 +1,6 @@
 # towerdefense / Daily Hold
 
-Greenfield web-first tower defense workspace.
+Web-first daily-dare tower defense.
 
 ## Locked product
 
@@ -8,30 +8,43 @@ See [`docs/product-target.md`](docs/product-target.md):
 
 - **Daily Dare TD** (shared UTC seed, ~2–5 min classic sessions)
 - **Near-miss** leak juice + spoiler-free share card
-- **Editorial Soft Defense** aesthetic (ritual shell + soft stylized battlefield)
+- **Editorial Soft Defense** aesthetic
 - Ads/IAP around Practice — never paywall today’s dare; never interrupt mid-wave
+- **Platform:** TypeScript + Vite + Phaser 3 → GitHub Pages; Capacitor later for stores
 
-Background research: [`docs/viral-game-plan.md`](docs/viral-game-plan.md).
+Background: [`docs/viral-game-plan.md`](docs/viral-game-plan.md) · Engineering: [`docs/engineering.md`](docs/engineering.md)
 
-## Testing & delivery metrics (build against these)
+## Development
 
-[`docs/testing-and-metrics.md`](docs/testing-and-metrics.md) is the interactive build playbook:
+```bash
+npm install
+npm run dev          # http://localhost:5173/towerdefense/
+npm run test         # unit (Vitest)
+npm run test:e2e     # Playwright smoke
+npm run lint && npm run typecheck
+npm run build && npm run preview
+```
 
-1. North-star goals
-2. Metric catalog (P / T / B) with targets and kill signals
-3. Delivery gates **G0→G6** (do not skip)
-4. Exhaustive functional / device / regression matrix
-5. Playtest script + scoreboard
-6. Analytics event contract
-7. Change-log protocol for before/after comparison
+## CI / CD
 
-Track iterations in [`docs/change-log.md`](docs/change-log.md). Store playtest runs in [`docs/playtests/`](docs/playtests/).
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| [`ci.yml`](.github/workflows/ci.yml) | PR / push to `main` | lint, typecheck, unit, build, e2e |
+| [`deploy.yml`](.github/workflows/deploy.yml) | push to `main` | CI gate → GitHub Pages |
+
+Enable **Settings → Pages → GitHub Actions** once. Details in [`docs/engineering.md`](docs/engineering.md).
+
+## Testing & delivery metrics
+
+[`docs/testing-and-metrics.md`](docs/testing-and-metrics.md) — north-stars, P/T/B metrics, gates **G0→G6**, regression pack.
+
+Track iterations in [`docs/change-log.md`](docs/change-log.md).
 
 ## Build order
 
-1. G0 docs aligned (this commit)
+1. G0 docs + CI scaffold (**done**)
 2. G1 core loop
-3. G2 daily seed + attempts + share card
+3. G2 daily seed + attempts + share card (logic seeded; UI next)
 4. G3 near-miss juice
 5. G4 Practice + test ads
 6. G5 playtest scoreboard

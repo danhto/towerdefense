@@ -314,7 +314,24 @@ Keep running entries in `docs/change-log.md`.
 
 ---
 
-## 8. Interactive build loop (how we use this day to day)
+## 8. CI automation checklist
+
+GitHub Actions ([`ci.yml`](../.github/workflows/ci.yml)) must stay green on every PR. Mapping to technical metrics:
+
+| CI step | Protects |
+|---------|----------|
+| `npm run lint` / `typecheck` | T4 (crash/exception hygiene) |
+| Vitest: seed + spawn determinism | T5 |
+| Vitest: attempt gate 1–3 → Practice | T6 |
+| Vitest: `canShowAd` mid-wave block | T7 |
+| Vitest: share payload / no spoiler keys | T8 |
+| Vitest: economy / lives | G1 foundations |
+| Playwright home smoke | T1/T4 smoke; shell loads |
+| `npm run build` | Deployability |
+
+Deploy ([`deploy.yml`](../.github/workflows/deploy.yml)) only runs after CI succeeds. Local parity: see [engineering.md](./engineering.md).
+
+## 9. Interactive build loop (how we use this day to day)
 
 1. Pick the **lowest unfinished gate** (G0→G6).  
 2. Implement the smallest slice that can move a must-pass check.  

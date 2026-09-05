@@ -15,6 +15,15 @@ Locked direction for this repo (from planning chats). Build and test against [te
 
 Working title: **Daily Hold**.
 
+## Platform
+
+| Concern | Choice |
+|---------|--------|
+| Primary | **Web PWA** — TypeScript + Vite + Phaser 3 |
+| Local | `npm run dev` / `npm run test` / `npm run test:e2e` |
+| Production | **GitHub Pages** from `main` (see [engineering.md](./engineering.md)) |
+| Android / iOS | **Capacitor** wrap post-MVP (same web bundle) |
+
 ## MVP scope
 
 - 1 harbor/town path map
