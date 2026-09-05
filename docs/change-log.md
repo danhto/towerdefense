@@ -1,0 +1,53 @@
+# Change log (metrics & alignment)
+
+Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newest entries on top.
+
+## Template
+
+```markdown
+### YYYY-MM-DD — short title
+- Goal touched: (P/T/B ids)
+- Change:
+- Regression pack: PASS/FAIL (notes)
+- Metrics before → after:
+- Alignment audit: PASS / DEVIATION (why)
+- Next action:
+```
+
+---
+
+### 2026-09-05 — G3–G6 code completion (near-miss, ads, analytics)
+
+- Goal touched: G3 P6/P7; G4 T7; G5 harness; G6 analytics/consent/errors; T6 e2e
+- Change: Near-miss pulse/shake/banner; sim event drain → analytics; Practice home UX; `adService` rate cap + remove-ads/consent; rewarded practice tip; balance stamp; error handlers; playtest template + soft-launch checklist; e2e Practice after 3 attempts
+- Regression pack: PASS — lint, typecheck, 36 unit tests, build, 3 e2e
+- Metrics before → after: juice/ads/analytics stubs online; human P-metrics still pending G5
+- Alignment audit: PASS — Today’s Dare never paywalled; ads default off without consent
+- Next action: Enable Pages; run human playtest scoreboard; wire real ad/analytics sinks if soft-launching publicly
+
+### 2026-09-05 — G1 core loop + G2 ritual wiring
+
+- Goal touched: G1 must-pass; T5/T6/T7/T8; P1–P2 smoke; near-miss field for G3
+- Change: Pure `MatchSim` (path, place/sell, waves, combat, lives/gold, win/lose); Play + Result scenes; home starts seeded attempts; share card copy; test ad slot post-run only; gate-status doc; unit tests for path/map/match; e2e start-attempt → play
+- Regression pack: PASS — lint, typecheck, 27 unit tests, build, 2 e2e
+- Metrics before → after: scaffold-only → playable harbor hold with daily attempt gate
+- Alignment audit: PASS — decisions recorded in `docs/gate-status.md` (sim-first, 3 towers, 8 waves, Pages stack)
+- Next action: G3 near-miss motion juice; balance pass; then G5 human playtest
+
+### 2026-09-05 — Local DX + GitHub Actions automation
+
+- Goal touched: T4–T8 foundations; G0→G1 scaffold; deploy path
+- Change: Vite + Phaser 3 + TypeScript app; daily seed / attempts / economy / lives / ads / share modules with Vitest; Playwright smoke; `ci.yml` + `deploy.yml` (Pages); `docs/engineering.md` + platform lock
+- Regression pack: PASS — lint, typecheck, 16 unit tests, build, e2e smoke
+- Metrics before → after: N/A → automated T5/T6/T7/T8 unit coverage online
+- Alignment audit: PASS — web-first PWA + Pages matches easy local/prod goal; Capacitor deferred
+- Next action: G1 playable core loop (place towers, waves) against gate checklist
+
+### 2026-09-05 — Testing & metrics guidelines authored
+
+- Goal touched: G0 docs alignment (enables all P/T gates)
+- Change: Added `docs/testing-and-metrics.md` with north-stars, metric catalog, delivery gates G0–G6, test matrix, playtest script, analytics contract, change-log protocol
+- Regression pack: N/A (docs only)
+- Metrics before → after: N/A
+- Alignment audit: PASS — guidelines map to Daily Dare TD + near-miss + Editorial Soft Defense + ad safety
+- Next action: Lock product target in README/GDD; start G1 core loop when build begins
