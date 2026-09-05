@@ -23,39 +23,39 @@ export const TOWER_DEFS: Record<TowerKind, TowerDef> = {
   bolt: {
     kind: "bolt",
     name: "Amber Bolt",
-    cost: 50,
-    range: 110,
-    damage: 18,
-    fireIntervalMs: 450,
+    cost: 55,
+    range: 105,
+    damage: 16,
+    fireIntervalMs: 480,
     slowFactor: 1,
     splashRadius: 0,
     color: PALETTE.amber,
   },
   brine: {
     kind: "brine",
-    name: "Teal Brine",
-    cost: 65,
-    range: 100,
-    damage: 8,
-    fireIntervalMs: 550,
-    slowFactor: 0.55,
+    name: "Mint Brine",
+    cost: 70,
+    range: 95,
+    damage: 7,
+    fireIntervalMs: 580,
+    slowFactor: 0.5,
     splashRadius: 0,
-    color: PALETTE.seaTeal,
+    color: PALETTE.brine,
   },
   burst: {
     kind: "burst",
     name: "Coral Burst",
-    cost: 80,
-    range: 90,
-    damage: 14,
-    fireIntervalMs: 700,
+    cost: 90,
+    range: 85,
+    damage: 12,
+    fireIntervalMs: 720,
     slowFactor: 1,
-    splashRadius: 48,
+    splashRadius: 44,
     color: PALETTE.coral,
   },
 };
 
-export const SELL_REFUND_RATIO = 0.6;
+export const SELL_REFUND_RATIO = 0.55;
 
 export function sellRefund(cost: number): number {
   return Math.floor(cost * SELL_REFUND_RATIO);
@@ -67,7 +67,7 @@ export function upgradeCost(
   fromTier: TowerTier,
 ): number | null {
   if (fromTier >= MAX_TOWER_TIER) return null;
-  return Math.floor(TOWER_DEFS[kind].cost * 0.8);
+  return Math.floor(TOWER_DEFS[kind].cost * 0.85);
 }
 
 /** Total gold invested in a tower at the given tier (place + upgrades). */
@@ -91,12 +91,12 @@ export function towerStats(kind: TowerKind, tier: TowerTier): TowerDef {
   return {
     ...base,
     name: `${base.name} II`,
-    damage: Math.round(base.damage * 1.45),
-    range: Math.round(base.range * 1.15),
-    fireIntervalMs: Math.max(280, Math.round(base.fireIntervalMs * 0.85)),
+    damage: Math.round(base.damage * 1.4),
+    range: Math.round(base.range * 1.12),
+    fireIntervalMs: Math.max(300, Math.round(base.fireIntervalMs * 0.88)),
     splashRadius:
-      base.splashRadius > 0 ? Math.round(base.splashRadius * 1.2) : 0,
+      base.splashRadius > 0 ? Math.round(base.splashRadius * 1.15) : 0,
     slowFactor:
-      base.slowFactor < 1 ? Math.max(0.35, base.slowFactor - 0.1) : 1,
+      base.slowFactor < 1 ? Math.max(0.35, base.slowFactor - 0.08) : 1,
   };
 }

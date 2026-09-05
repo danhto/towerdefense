@@ -27,7 +27,7 @@ test("starting an attempt enters the play scene", async ({ page }) => {
   expect(box).toBeTruthy();
   if (!box) return;
 
-  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.62);
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.58);
   await expect(page.getByTestId("build-status")).toHaveText(/Play scene ready/i, {
     timeout: 10_000,
   });
@@ -66,7 +66,7 @@ test("burning 3 official attempts flips home to Practice (T6)", async ({ page })
   if (!box) return;
 
   // Enter Practice CTA (same relative position as start).
-  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.62);
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.58);
   await expect(page.getByTestId("build-status")).toHaveText(/Play scene ready/i, {
     timeout: 10_000,
   });

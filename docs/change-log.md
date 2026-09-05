@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-05 — Play polish: difficulty, brine contrast, chrome spacing
+
+- Goal touched: P11 (tower readability); balance feel; UX chrome
+- Change: Harder economy/enemies/spawns (gold 110, denser packs, leaner bounties); brine → ice-sky `#bae6fd` + ink/foam double stroke; Play chrome one action row; Home/Result spacing
+- Regression pack: PASS — lint, typecheck, 39 unit, build, e2e
+- Metrics before → after: daily should feel tighter; brine no longer camouflaged on grass
+- Alignment audit: PASS — same 8-wave daily ritual; color still maps to role
+- Next action: Human playtest scoreboard (G5)
+
 ### 2026-09-05 — MVP gaps: tower upgrades + share card image
 
 - Goal touched: MVP scope (2 upgrade tiers; share image); T8; P8/P9

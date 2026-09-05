@@ -63,7 +63,7 @@ export class PlayScene extends Phaser.Scene {
       mode: data.mode,
       attemptNumber: data.attemptNumber,
       waveCount: 8,
-      startingGold: 140,
+      startingGold: 110,
       startingLives: 3,
     });
   }
@@ -73,20 +73,15 @@ export class PlayScene extends Phaser.Scene {
     this.gfx = this.add.graphics();
     this.drawBoard();
 
-    this.hud = this.add
-      .text(12, 8, "", {
-        fontFamily: "Manrope, sans-serif",
-        fontSize: "16px",
-        color: "#f8faf9",
-      })
-      .setDepth(20);
+    const mapBottom = MAP_ROWS * TILE;
+    const chromePad = 16;
 
-    this.hint = this.add
-      .text(12, MAP_ROWS * TILE + 8, "", {
+    this.hud = this.add
+      .text(chromePad, 12, "", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
-        color: "#e8dcc8",
-        wordWrap: { width: 520 },
+        fontSize: "15px",
+        color: "#f8faf9",
+        lineSpacing: 8,
       })
       .setDepth(20);
 
@@ -105,24 +100,15 @@ export class PlayScene extends Phaser.Scene {
 
     this.buildTowerBar();
 
-    this.waveBtn = this.add
-      .text(560, MAP_ROWS * TILE + 8, "Start wave", {
+    // Hint under the single action row — keeps chrome one band, not stacked fights.
+    this.hint = this.add
+      .text(chromePad, mapBottom + 108, "", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "18px",
-        color: "#0b3d3a",
-        backgroundColor: "#e8dcc8",
-        padding: { x: 12, y: 8 },
+        fontSize: "13px",
+        color: "#e8dcc8",
+        wordWrap: { width: 688 },
       })
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20)
-      .setName("startWaveBtn");
-
-    this.waveBtn.on("pointerdown", () => {
-      this.sim.startWave();
-      this.refreshHud(this.sim.snapshot());
-      this.emitSimEvents();
-    });
-
+      .setDepth(20);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (pointer.y >= MAP_ROWS * TILE) return;
       const col = Math.floor(pointer.x / TILE);
@@ -267,15 +253,27 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private buildTowerBar(): void {
-    (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind, i) => {
+    const mapBottom = MAP_ROWS * TILE;
+    const rowY = mapBottom + 52;
+    const labels: Record<TowerKind, string> = {
+      bolt: "Bolt",
+      brine: "Brine",
+      burst: "Burst",
+    };
+    const gap = 14;
+    let x = 16;
+
+    (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind) => {
       const def = TOWER_DEFS[kind];
+      const hex = `#${def.color.toString(16).padStart(6, "0")}`;
       const btn = this.add
-        .text(12 + i * 155, MAP_ROWS * TILE + 40, `${def.name} $${def.cost}`, {
+        .text(x, rowY, `${labels[kind]} $${def.cost}`, {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "13px",
+          fontSize: "14px",
+          fontStyle: "700",
           color: "#0b3d3a",
-          backgroundColor: `#${def.color.toString(16).padStart(6, "0")}`,
-          padding: { x: 8, y: 6 },
+          backgroundColor: hex,
+          padding: { x: 12, y: 10 },
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(20)
@@ -288,15 +286,17 @@ export class PlayScene extends Phaser.Scene {
         this.sim.selectTowerKind(kind);
         this.refreshHud(this.sim.snapshot());
       });
+      x += btn.width + gap;
     });
 
     const sell = this.add
-      .text(480, MAP_ROWS * TILE + 40, "Sell", {
+      .text(x + 8, rowY, "Sell", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
+        fontSize: "14px",
+        fontStyle: "700",
         color: "#f8faf9",
-        backgroundColor: "#78716c",
-        padding: { x: 8, y: 6 },
+        backgroundColor: "#57534e",
+        padding: { x: 14, y: 10 },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -309,12 +309,13 @@ export class PlayScene extends Phaser.Scene {
     });
 
     this.upgradeBtn = this.add
-      .text(560, MAP_ROWS * TILE + 40, "Upgrade", {
+      .text(sell.x + sell.width + gap, rowY, "Upgrade", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
+        fontSize: "14px",
+        fontStyle: "700",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 8, y: 6 },
+        padding: { x: 14, y: 10 },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -326,6 +327,26 @@ export class PlayScene extends Phaser.Scene {
         this.refreshHud(this.sim.snapshot());
         this.emitSimEvents();
       }
+    });
+
+    // Same row as tower chips — right-aligned so chrome is one band.
+    this.waveBtn = this.add
+      .text(720 - 16, rowY, "Start wave", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "15px",
+        fontStyle: "700",
+        color: "#0b3d3a",
+        backgroundColor: "#e8dcc8",
+        padding: { x: 14, y: 10 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20)
+      .setName("startWaveBtn");
+    this.waveBtn.on("pointerdown", () => {
+      this.sim.startWave();
+      this.refreshHud(this.sim.snapshot());
+      this.emitSimEvents();
     });
   }
 
@@ -358,17 +379,23 @@ export class PlayScene extends Phaser.Scene {
       const def = towerStats(tower.kind, tower.tier);
       const selected =
         this.selectedCol === tower.col && this.selectedRow === tower.row;
+      const radius = tower.tier >= 2 ? 18 : 16;
       this.gfx.fillStyle(def.color, 1);
-      this.gfx.fillCircle(tower.x, tower.y, tower.tier >= 2 ? 18 : 16);
+      this.gfx.fillCircle(tower.x, tower.y, radius);
+      // Dark outer + foam inner so ice/cyan brine never vanishes into grass.
+      this.gfx.lineStyle(4, PALETTE.ink, 0.95);
+      this.gfx.strokeCircle(tower.x, tower.y, radius + 1);
+      this.gfx.lineStyle(2, PALETTE.foam, 1);
+      this.gfx.strokeCircle(tower.x, tower.y, radius - 1);
       if (tower.tier >= 2) {
         this.gfx.lineStyle(3, PALETTE.amber, 0.95);
-        this.gfx.strokeCircle(tower.x, tower.y, 22);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 6);
       }
       if (selected) {
-        this.gfx.lineStyle(2, PALETTE.foam, 0.9);
-        this.gfx.strokeCircle(tower.x, tower.y, 26);
+        this.gfx.lineStyle(2, PALETTE.sand, 1);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 10);
       }
-      this.gfx.lineStyle(1, PALETTE.foam, 0.3);
+      this.gfx.lineStyle(1, PALETTE.foam, 0.28);
       this.gfx.strokeCircle(tower.x, tower.y, def.range);
     }
 
@@ -420,7 +447,7 @@ export class PlayScene extends Phaser.Scene {
     this.hint.setText(
       snap.nearMissActive
         ? "Near miss — stop them at the harbor gate!"
-        : "Tap teal to place · tap a tower to upgrade · Start wave when ready",
+        : "Tap grass to place · select a tower to upgrade · Start wave when ready",
     );
     this.waveBtn.setVisible(snap.phase === "build");
     const canUpgrade =
