@@ -19,7 +19,7 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 ### 2026-09-05 — Play polish: difficulty, brine contrast, chrome spacing
 
 - Goal touched: P11 (tower readability); balance feel; UX chrome
-- Change: Harder economy/enemies/spawns (gold 110, denser packs, leaner bounties); brine → bright cyan + foam stroke; Play/Home/Result button spacing; hint under action row
+- Change: Harder economy/enemies/spawns (gold 110, denser packs, leaner bounties); brine → ice-sky `#bae6fd` + ink/foam double stroke; Play chrome one action row; Home/Result spacing
 - Regression pack: PASS — lint, typecheck, 39 unit, build, e2e
 - Metrics before → after: daily should feel tighter; brine no longer camouflaged on grass
 - Alignment audit: PASS — same 8-wave daily ritual; color still maps to role
