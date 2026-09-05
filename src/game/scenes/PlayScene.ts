@@ -11,7 +11,12 @@ import {
   isPathTile,
 } from "../sim/map";
 import { ENEMY_STATS } from "../sim/enemies";
-import { TOWER_DEFS, type TowerKind } from "../sim/towers";
+import {
+  TOWER_DEFS,
+  towerStats,
+  upgradeCost,
+  type TowerKind,
+} from "../sim/towers";
 import { tryShowBanner } from "../systems/adService";
 import { PALETTE } from "../theme/palette";
 
@@ -31,6 +36,9 @@ export class PlayScene extends Phaser.Scene {
   private waveBtn!: Phaser.GameObjects.Text;
   private selectedKind: TowerKind = "bolt";
   private sellMode = false;
+  private selectedCol: number | null = null;
+  private selectedRow: number | null = null;
+  private upgradeBtn!: Phaser.GameObjects.Text;
   private ended = false;
   private nearMissPulse = 0;
   private lastNearMissActive = false;
@@ -43,6 +51,8 @@ export class PlayScene extends Phaser.Scene {
   init(data: PlaySceneData): void {
     this.ended = false;
     this.sellMode = false;
+    this.selectedCol = null;
+    this.selectedRow = null;
     this.selectedKind = "bolt";
     this.nearMissPulse = 0;
     this.lastNearMissActive = false;
@@ -115,13 +125,26 @@ export class PlayScene extends Phaser.Scene {
 
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (pointer.y >= MAP_ROWS * TILE) return;
+      const col = Math.floor(pointer.x / TILE);
+      const row = Math.floor(pointer.y / TILE);
       if (this.sellMode) {
-        const col = Math.floor(pointer.x / TILE);
-        const row = Math.floor(pointer.y / TILE);
         this.sim.trySellAt(col, row);
+        this.selectedCol = null;
+        this.selectedRow = null;
       } else {
-        this.sim.selectTowerKind(this.selectedKind);
-        this.sim.tryPlaceAtWorld(pointer.x, pointer.y);
+        const occupied = this.sim.snapshot().towers.some(
+          (t) => t.col === col && t.row === row,
+        );
+        if (occupied) {
+          this.selectedCol = col;
+          this.selectedRow = row;
+        } else {
+          this.sim.selectTowerKind(this.selectedKind);
+          if (this.sim.tryPlaceAtWorld(pointer.x, pointer.y)) {
+            this.selectedCol = col;
+            this.selectedRow = row;
+          }
+        }
       }
       this.refreshHud(this.sim.snapshot());
       this.emitSimEvents();
@@ -208,6 +231,13 @@ export class PlayScene extends Phaser.Scene {
           seed: this.sim.seed,
           mode: this.sim.mode,
         });
+      } else if (ev.type === "tower_upgraded") {
+        track({
+          name: "tower_placed",
+          tower_type: `${ev.towerType}_t${ev.tier}`,
+          tile: `${ev.col},${ev.row}`,
+          elapsed_ms: this.sim.snapshot().elapsedMs,
+        });
       }
     }
   }
@@ -253,6 +283,8 @@ export class PlayScene extends Phaser.Scene {
       btn.on("pointerdown", () => {
         this.selectedKind = kind;
         this.sellMode = false;
+        this.selectedCol = null;
+        this.selectedRow = null;
         this.sim.selectTowerKind(kind);
         this.refreshHud(this.sim.snapshot());
       });
@@ -271,7 +303,29 @@ export class PlayScene extends Phaser.Scene {
       .setName("sellBtn");
     sell.on("pointerdown", () => {
       this.sellMode = true;
+      this.selectedCol = null;
+      this.selectedRow = null;
       this.refreshHud(this.sim.snapshot());
+    });
+
+    this.upgradeBtn = this.add
+      .text(560, MAP_ROWS * TILE + 40, "Upgrade", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "13px",
+        color: "#0b3d3a",
+        backgroundColor: "#e8dcc8",
+        padding: { x: 8, y: 6 },
+      })
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20)
+      .setName("upgradeBtn")
+      .setVisible(false);
+    this.upgradeBtn.on("pointerdown", () => {
+      if (this.selectedCol === null || this.selectedRow === null) return;
+      if (this.sim.tryUpgradeAt(this.selectedCol, this.selectedRow)) {
+        this.refreshHud(this.sim.snapshot());
+        this.emitSimEvents();
+      }
     });
   }
 
@@ -301,9 +355,19 @@ export class PlayScene extends Phaser.Scene {
     this.drawBoard();
 
     for (const tower of snap.towers) {
-      const def = TOWER_DEFS[tower.kind];
+      const def = towerStats(tower.kind, tower.tier);
+      const selected =
+        this.selectedCol === tower.col && this.selectedRow === tower.row;
       this.gfx.fillStyle(def.color, 1);
-      this.gfx.fillCircle(tower.x, tower.y, 16);
+      this.gfx.fillCircle(tower.x, tower.y, tower.tier >= 2 ? 18 : 16);
+      if (tower.tier >= 2) {
+        this.gfx.lineStyle(3, PALETTE.amber, 0.95);
+        this.gfx.strokeCircle(tower.x, tower.y, 22);
+      }
+      if (selected) {
+        this.gfx.lineStyle(2, PALETTE.foam, 0.9);
+        this.gfx.strokeCircle(tower.x, tower.y, 26);
+      }
       this.gfx.lineStyle(1, PALETTE.foam, 0.3);
       this.gfx.strokeCircle(tower.x, tower.y, def.range);
     }
@@ -327,20 +391,46 @@ export class PlayScene extends Phaser.Scene {
   private refreshHud(snap: MatchSnapshot): void {
     const waveLabel = Math.min(snap.waveIndex + 1, snap.waveCount);
     const modeTag = snap.mode === "practice" ? " · PRACTICE" : "";
+    const selected =
+      this.selectedCol !== null && this.selectedRow !== null
+        ? snap.towers.find(
+            (t) => t.col === this.selectedCol && t.row === this.selectedRow,
+          )
+        : undefined;
+    let modeLine: string;
+    if (this.sellMode) {
+      modeLine = "SELL mode — tap a tower";
+    } else if (selected) {
+      const stats = towerStats(selected.kind, selected.tier);
+      const next = upgradeCost(selected.kind, selected.tier);
+      modeLine =
+        next === null
+          ? `Selected ${stats.name} (max tier)`
+          : `Selected ${stats.name} — upgrade $${next}`;
+    } else {
+      modeLine = `Place: ${TOWER_DEFS[this.selectedKind].name}`;
+    }
     this.hud.setText(
       [
         `${snap.phase.toUpperCase()}  Wave ${waveLabel}/${snap.waveCount}${modeTag}`,
         `Gold ${snap.gold}   Lives ${snap.lives}   Score ${snap.score}`,
-        this.sellMode
-          ? "SELL mode — tap a tower"
-          : `Place: ${TOWER_DEFS[this.selectedKind].name}`,
+        modeLine,
       ].join("\n"),
     );
     this.hint.setText(
       snap.nearMissActive
         ? "Near miss — stop them at the harbor gate!"
-        : "Tap teal tiles to place · Start wave when ready · Same dare for everyone today",
+        : "Tap teal to place · tap a tower to upgrade · Start wave when ready",
     );
     this.waveBtn.setVisible(snap.phase === "build");
+    const canUpgrade =
+      !!selected &&
+      this.sim.canUpgradeAt(selected.col, selected.row) &&
+      !this.sellMode;
+    this.upgradeBtn.setVisible(canUpgrade);
+    if (selected && upgradeCost(selected.kind, selected.tier) !== null) {
+      const cost = upgradeCost(selected.kind, selected.tier)!;
+      this.upgradeBtn.setText(`Upgrade $${cost}`);
+    }
   }
 }

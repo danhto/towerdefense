@@ -105,4 +105,29 @@ describe("match sim (G1)", () => {
     const waves = sim.drainEvents().filter((e) => e.type === "wave_started");
     expect(waves).toHaveLength(1);
   });
+
+  it("upgrades a tower to tier 2 and refunds invested gold on sell", () => {
+    const sim = makeSim({ startingGold: 500 });
+    expect(sim.tryPlaceAt(0, 0)).toBe(true);
+    const afterPlace = sim.snapshot().gold;
+    expect(sim.snapshot().towers[0]!.tier).toBe(1);
+    expect(sim.tryUpgradeAt(0, 0)).toBe(true);
+    const snap = sim.snapshot();
+    expect(snap.towers[0]!.tier).toBe(2);
+    expect(snap.gold).toBeLessThan(afterPlace);
+    expect(sim.tryUpgradeAt(0, 0)).toBe(false); // max tier
+    const beforeSell = sim.snapshot().gold;
+    expect(sim.trySellAt(0, 0)).toBe(true);
+    // Refund should exceed base-only sell because upgrade gold was invested.
+    expect(sim.snapshot().gold).toBeGreaterThan(beforeSell);
+  });
+
+  it("emits tower_upgraded events", () => {
+    const sim = makeSim({ startingGold: 500 });
+    sim.tryPlaceAt(0, 0);
+    sim.drainEvents();
+    expect(sim.tryUpgradeAt(0, 0)).toBe(true);
+    const upgraded = sim.drainEvents().filter((e) => e.type === "tower_upgraded");
+    expect(upgraded).toHaveLength(1);
+  });
 });

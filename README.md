@@ -49,5 +49,6 @@ See [`docs/gate-status.md`](docs/gate-status.md) for the live checklist. Soft-la
 3. G2 daily seed + attempts + share card — **done**
 4. G3 near-miss juice — **done**
 5. G4 Practice + test ads — **done**
-6. G5 playtest scoreboard — harness ready (**needs humans**)
-7. G6 soft-launch readiness — **code ready**
+6. MVP extras (2-tier upgrades + share PNG) — **done**
+7. G5 playtest scoreboard — harness ready (**needs humans**)
+8. G6 soft-launch readiness — **code ready**

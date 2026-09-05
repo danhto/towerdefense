@@ -12,6 +12,11 @@ import {
   buildShareCardPayload,
   formatShareText,
 } from "../share/card";
+import {
+  copyShareCardImage,
+  downloadShareCardImage,
+  shareCardToDataUrl,
+} from "../share/image";
 import type { MatchSnapshot } from "../sim/match";
 import {
   tryShowInterstitial,
@@ -63,9 +68,9 @@ export class ResultScene extends Phaser.Scene {
     const shareText = formatShareText(card);
 
     this.add
-      .text(width / 2, height * 0.24, shareText, {
+      .text(width / 2, height * 0.22, shareText, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#e8dcc8",
         align: "center",
       })
@@ -74,9 +79,9 @@ export class ResultScene extends Phaser.Scene {
 
     if (!cleared && snap.failReason) {
       this.add
-        .text(width / 2, height * 0.36, snap.failReason, {
+        .text(width / 2, height * 0.34, snap.failReason, {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "16px",
+          fontSize: "15px",
           color: "#fda4af",
         })
         .setOrigin(0.5)
@@ -88,16 +93,16 @@ export class ResultScene extends Phaser.Scene {
         ? "No near-miss this run"
         : `Closest leak pressure: ${snap.closestLeakPct.toFixed(0)}% path left`;
     this.add
-      .text(width / 2, height * 0.42, near, {
+      .text(width / 2, height * 0.39, near, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "16px",
+        fontSize: "14px",
         color: "#a8b5a0",
       })
       .setOrigin(0.5)
       .setName("nearMissSummary");
 
     this.add
-      .text(width / 2, height * 0.47, `Balance ${balance}`, {
+      .text(width / 2, height * 0.43, `Balance ${balance}`, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "12px",
         color: "#78716c",
@@ -105,10 +110,9 @@ export class ResultScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setName("balanceVersion");
 
-    // G4: rate-capped interstitial via adService (never mid-wave).
     if (tryShowInterstitial("result_end")) {
       this.add
-        .text(width / 2, height * 0.52, "[test interstitial slot]", {
+        .text(width / 2, height * 0.47, "[test interstitial slot]", {
           fontFamily: "Manrope, sans-serif",
           fontSize: "12px",
           color: "#78716c",
@@ -117,12 +121,11 @@ export class ResultScene extends Phaser.Scene {
         .setName("adSlot");
     }
 
-    // Practice-only rewarded tip (optional).
     if (data.mode === "practice") {
       const tip = this.add
-        .text(width / 2, height * 0.57, "Watch tip ad (practice)", {
+        .text(width / 2, height * 0.51, "Watch tip ad (practice)", {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "14px",
+          fontSize: "13px",
           color: "#e8dcc8",
           backgroundColor: "#0b3d3a",
           padding: { x: 10, y: 6 },
@@ -139,7 +142,23 @@ export class ResultScene extends Phaser.Scene {
       });
     }
 
-    this.button(width / 2, height * 0.66, "Copy share card", async () => {
+    try {
+      const dataUrl = shareCardToDataUrl(card);
+      const key = `share-card-${data.dateKey}-${data.attemptNumber}`;
+      if (this.textures.exists(key)) this.textures.remove(key);
+      this.textures.addBase64(key, dataUrl);
+      this.time.delayedCall(80, () => {
+        if (!this.textures.exists(key)) return;
+        this.add
+          .image(width / 2, height * 0.60, key)
+          .setDisplaySize(260, 152)
+          .setName("shareCardImage");
+      });
+    } catch {
+      /* ignore */
+    }
+
+    this.button(width / 2 - 110, height * 0.74, "Copy text", async () => {
       track({ name: "share_click", surface: "result", method: "copy" });
       try {
         await navigator.clipboard.writeText(shareText);
@@ -148,7 +167,24 @@ export class ResultScene extends Phaser.Scene {
       }
     });
 
-    this.button(width / 2, height * 0.76, "Play again", () => {
+    this.button(width / 2 + 110, height * 0.74, "Save image", () => {
+      track({ name: "share_click", surface: "result", method: "native" });
+      downloadShareCardImage(card);
+    });
+
+    this.button(width / 2, height * 0.82, "Copy image", async () => {
+      track({ name: "share_click", surface: "result", method: "native" });
+      const ok = await copyShareCardImage(card);
+      if (!ok) {
+        try {
+          await navigator.clipboard.writeText(shareText);
+        } catch {
+          /* ignore */
+        }
+      }
+    });
+
+    this.button(width / 2 - 90, height * 0.90, "Play again", () => {
       const { dateKey, seed } = dailySeed();
       const started = startNextAttempt(dateKey);
       this.scene.start("play", {
@@ -159,7 +195,7 @@ export class ResultScene extends Phaser.Scene {
       });
     });
 
-    this.button(width / 2, height * 0.86, "Home", () => {
+    this.button(width / 2 + 90, height * 0.90, "Home", () => {
       this.scene.start("home");
     });
 
@@ -169,13 +205,13 @@ export class ResultScene extends Phaser.Scene {
     this.add
       .text(
         width / 2,
-        height * 0.94,
+        height * 0.97,
         next === "practice"
           ? "Further runs today are Practice"
           : `Official attempts left today: ${left}`,
         {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "14px",
+          fontSize: "13px",
           color: "#a8b5a0",
         },
       )
