@@ -4,8 +4,26 @@ import {
   createAttemptState,
   remainingOfficialAttempts,
   syncAttemptDate,
+  type AttemptState,
 } from "../daily/attempts";
 import { dailySeed } from "../daily/seed";
+import { PALETTE } from "../theme/palette";
+
+const ATTEMPT_KEY = "daily-hold-attempts-v1";
+
+function loadAttempts(dateKey: string): AttemptState {
+  try {
+    const raw = localStorage.getItem(ATTEMPT_KEY);
+    if (!raw) return createAttemptState(dateKey);
+    return syncAttemptDate(JSON.parse(raw) as AttemptState, dateKey);
+  } catch {
+    return createAttemptState(dateKey);
+  }
+}
+
+function saveAttempts(state: AttemptState): void {
+  localStorage.setItem(ATTEMPT_KEY, JSON.stringify(state));
+}
 
 export class HomeScene extends Phaser.Scene {
   constructor() {
@@ -15,14 +33,16 @@ export class HomeScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale;
     const { dateKey, seed } = dailySeed();
-    let attempts = syncAttemptDate(createAttemptState(dateKey), dateKey);
+    const attempts = loadAttempts(dateKey);
+
+    this.cameras.main.setBackgroundColor(PALETTE.seaTealDeep);
 
     this.add
-      .rectangle(width / 2, height / 2, width, height, 0x0f766e, 0.35)
-      .setStrokeStyle(2, 0xa8b5a0);
+      .rectangle(width / 2, height / 2, width, height, PALETTE.seaTeal, 0.35)
+      .setStrokeStyle(2, PALETTE.sage);
 
     this.add
-      .text(width / 2, height * 0.22, "Today’s Dare", {
+      .text(width / 2, height * 0.2, "Today’s Dare", {
         fontFamily: "Fraunces, Georgia, serif",
         fontSize: "42px",
         color: "#f8faf9",
@@ -30,7 +50,7 @@ export class HomeScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.3, dateKey, {
+      .text(width / 2, height * 0.28, dateKey, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "22px",
         color: "#e8dcc8",
@@ -39,18 +59,18 @@ export class HomeScene extends Phaser.Scene {
       .setName("dateLabel");
 
     this.add
-      .text(width / 2, height * 0.38, `Seed ${seed.toString(16)}`, {
+      .text(width / 2, height * 0.34, `Seed ${seed.toString(16)}`, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
         color: "#a8b5a0",
       })
       .setOrigin(0.5);
 
-    const status = this.add
+    this.add
       .text(
         width / 2,
-        height * 0.55,
-        `Official attempts remaining: ${remainingOfficialAttempts(attempts)}`,
+        height * 0.44,
+        `Official attempts left: ${remainingOfficialAttempts(attempts)}`,
         {
           fontFamily: "Manrope, sans-serif",
           fontSize: "18px",
@@ -60,8 +80,16 @@ export class HomeScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setName("attemptStatus");
 
+    this.add
+      .text(width / 2, height * 0.52, "Same harbor. Same waves. Hold the gate.", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "16px",
+        color: "#e8dcc8",
+      })
+      .setOrigin(0.5);
+
     const cta = this.add
-      .text(width / 2, height * 0.68, "Start attempt", {
+      .text(width / 2, height * 0.66, "Start attempt", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "24px",
         color: "#0b3d3a",
@@ -73,21 +101,20 @@ export class HomeScene extends Phaser.Scene {
       .setName("startCta");
 
     cta.on("pointerdown", () => {
-      const started = beginAttempt(attempts);
-      attempts = started.state;
-      status.setText(
-        started.mode === "official"
-          ? `Official attempt ${started.attemptNumber}/3`
-          : "Practice mode",
-      );
-      this.game.registry.set("lastMode", started.mode);
-      this.game.registry.set("dateKey", dateKey);
+      let state = loadAttempts(dateKey);
+      const started = beginAttempt(state);
+      state = started.state;
+      saveAttempts(state);
+      this.scene.start("play", {
+        seed,
+        dateKey,
+        mode: started.mode,
+        attemptNumber: started.attemptNumber,
+      });
     });
 
     const dare = document.getElementById("dare-label");
-    if (dare) {
-      dare.textContent = `Today’s Dare — ${dateKey}`;
-    }
+    if (dare) dare.textContent = `Today’s Dare — ${dateKey}`;
     const build = document.getElementById("build-status");
     if (build) {
       build.textContent = "Home scene ready";

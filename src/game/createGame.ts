@@ -1,6 +1,8 @@
 import Phaser from "phaser";
 import { BootScene } from "./scenes/BootScene";
 import { HomeScene } from "./scenes/HomeScene";
+import { PlayScene } from "./scenes/PlayScene";
+import { ResultScene } from "./scenes/ResultScene";
 
 export function createGame(parent: string | HTMLElement): Phaser.Game {
   return new Phaser.Game({
@@ -13,7 +15,7 @@ export function createGame(parent: string | HTMLElement): Phaser.Game {
       width: 720,
       height: 960,
     },
-    scene: [BootScene, HomeScene],
+    scene: [BootScene, HomeScene, PlayScene, ResultScene],
     banner: false,
   });
 }

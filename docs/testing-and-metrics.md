@@ -2,7 +2,7 @@
 
 Guidelines for building interactively against the locked product plan (Daily Dare TD + near-miss + Editorial Soft Defense). Use this doc as the **definition of done**, the **regression checklist**, and the **scoreboard** whenever behavior or UX changes.
 
-Related: [viral-game-plan.md](./viral-game-plan.md) (patterns) · product lock below · GDD when authored.
+Related: [viral-game-plan.md](./viral-game-plan.md) · [engineering.md](./engineering.md) · [gate-status.md](./gate-status.md) · GDD when authored.
 
 ---
 

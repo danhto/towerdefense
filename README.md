@@ -40,12 +40,14 @@ Enable **Settings → Pages → GitHub Actions** once. Details in [`docs/enginee
 
 Track iterations in [`docs/change-log.md`](docs/change-log.md).
 
-## Build order
+## Build order / gate status
 
-1. G0 docs + CI scaffold (**done**)
-2. G1 core loop
-3. G2 daily seed + attempts + share card (logic seeded; UI next)
-4. G3 near-miss juice
-5. G4 Practice + test ads
+See [`docs/gate-status.md`](docs/gate-status.md) for the live checklist.
+
+1. G0 docs + CI scaffold — **done**
+2. G1 core loop — **done** (playable)
+3. G2 daily seed + attempts + share card — **done** (UI wired)
+4. G3 near-miss juice — partial (metric on result; juice next)
+5. G4 Practice + test ads — partial (practice + result test slot)
 6. G5 playtest scoreboard
 7. G6 soft-launch readiness
