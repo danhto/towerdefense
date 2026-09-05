@@ -77,4 +77,32 @@ describe("match sim (G1)", () => {
     expect(sim.tryPlaceAt(0, 0)).toBe(false);
     expect(sim.snapshot().gold).toBe(40);
   });
+
+  it("marks near-miss when an enemy enters the last 10% of the path", () => {
+    const sim = makeSim({ startingLives: 3, waveCount: 1, startingGold: 0 });
+    expect(sim.startWave()).toBe(true);
+    let sawNear = false;
+    for (let i = 0; i < 20_000; i++) {
+      const snap = sim.tick(50);
+      const events = sim.drainEvents();
+      if (events.some((e) => e.type === "near_miss")) sawNear = true;
+      if (snap.nearMissActive) {
+        expect(snap.enemies.some((e) => e.nearMiss)).toBe(true);
+        expect(sawNear).toBe(true);
+        return;
+      }
+      if (snap.phase === "lost" || snap.phase === "won") break;
+    }
+    throw new Error("never entered near-miss zone");
+  });
+
+  it("emits tower_placed and wave_started events", () => {
+    const sim = makeSim();
+    sim.tryPlaceAt(0, 0);
+    const placed = sim.drainEvents().filter((e) => e.type === "tower_placed");
+    expect(placed).toHaveLength(1);
+    sim.startWave();
+    const waves = sim.drainEvents().filter((e) => e.type === "wave_started");
+    expect(waves).toHaveLength(1);
+  });
 });

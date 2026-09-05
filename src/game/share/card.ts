@@ -55,7 +55,7 @@ export function buildShareCardPayload(input: {
 }
 
 export function formatShareText(card: ShareCardPayload): string {
-  const status = card.result === "cleared" ? "CLEARED" : "HELD";
+  const status = card.result === "cleared" ? "CLEARED" : "BREACHED";
   const attempt = `${card.officialAttempt}/${card.officialLimit}`;
   const near =
     card.closestLeakPct === null

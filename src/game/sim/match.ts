@@ -54,6 +54,8 @@ export interface SimEnemy {
   distance: number;
   slowUntilMs: number;
   alive: boolean;
+  /** True while in the final ~10% of the path (G3 near-miss). */
+  nearMiss: boolean;
 }
 
 export interface MatchConfig {
@@ -77,11 +79,37 @@ export interface MatchSnapshot {
   /** Remaining path % at closest approach to exit (lower = closer). */
   closestLeakPct: number | null;
   failReason: string | null;
+  /** True when any living enemy is in the last 10% of the path. */
+  nearMissActive: boolean;
   elapsedMs: number;
   towers: PlacedTower[];
   enemies: SimEnemy[];
   selectedTowerKind: TowerKind;
+  mode: "official" | "practice";
+  attemptNumber: number;
 }
+
+/** Side-channel events for analytics / juice (drained by the scene). */
+export type SimEvent =
+  | {
+      type: "near_miss";
+      enemyType: EnemyKind;
+      pathPctRemaining: number;
+    }
+  | {
+      type: "life_lost";
+      enemyType: EnemyKind;
+      pathPct: number;
+      livesLeft: number;
+    }
+  | {
+      type: "tower_placed";
+      towerType: TowerKind;
+      col: number;
+      row: number;
+      elapsedMs: number;
+    }
+  | { type: "wave_started"; waveIndex: number };
 
 export class MatchSim {
   readonly path: Point[];
@@ -110,6 +138,7 @@ export class MatchSim {
   private failReason: string | null = null;
   private selectedTowerKind: TowerKind = "bolt";
   private wavesCleared = 0;
+  private events: SimEvent[] = [];
 
   constructor(config: MatchConfig) {
     this.seed = config.seed;
@@ -125,6 +154,7 @@ export class MatchSim {
   }
 
   snapshot(): MatchSnapshot {
+    const living = this.enemies.filter((e) => e.alive);
     return {
       phase: this.phase,
       gold: this.economy.gold,
@@ -135,15 +165,25 @@ export class MatchSim {
       kills: this.kills,
       closestLeakPct: this.closestLeakPct,
       failReason: this.failReason,
+      nearMissActive: living.some((e) => e.nearMiss),
       elapsedMs: this.elapsedMs,
       towers: this.towers.map((t) => ({ ...t })),
-      enemies: this.enemies.filter((e) => e.alive).map((e) => ({ ...e })),
+      enemies: living.map((e) => ({ ...e })),
       selectedTowerKind: this.selectedTowerKind,
+      mode: this.mode,
+      attemptNumber: this.attemptNumber,
     };
   }
 
   selectTowerKind(kind: TowerKind): void {
     this.selectedTowerKind = kind;
+  }
+
+  /** Drain pending sim events (near-miss, life lost, place, wave start). */
+  drainEvents(): SimEvent[] {
+    const out = this.events;
+    this.events = [];
+    return out;
   }
 
   canPlaceAt(col: number, row: number): boolean {
@@ -171,6 +211,13 @@ export class MatchSim {
       y: row * TILE + TILE / 2,
       cooldownMs: 0,
     });
+    this.events.push({
+      type: "tower_placed",
+      towerType: def.kind,
+      col,
+      row,
+      elapsedMs: this.elapsedMs,
+    });
     return true;
   }
 
@@ -191,6 +238,7 @@ export class MatchSim {
     this.waveTimeMs = 0;
     this.spawnCursor = this.schedule.findIndex((e) => e.waveIndex === this.waveIndex);
     if (this.spawnCursor < 0) this.spawnCursor = this.schedule.length;
+    this.events.push({ type: "wave_started", waveIndex: this.waveIndex });
     return true;
   }
 
@@ -231,6 +279,7 @@ export class MatchSim {
         distance: 0,
         slowUntilMs: 0,
         alive: true,
+        nearMiss: false,
       });
       this.spawnCursor += 1;
     }
@@ -247,6 +296,15 @@ export class MatchSim {
 
       const progress = progressAlongPath(this.path, enemy.distance);
       const remainingPct = (1 - progress) * 100;
+      const wasNear = enemy.nearMiss;
+      enemy.nearMiss = remainingPct <= 10;
+      if (enemy.nearMiss && !wasNear) {
+        this.events.push({
+          type: "near_miss",
+          enemyType: enemy.kind,
+          pathPctRemaining: remainingPct,
+        });
+      }
       if (remainingPct <= 15) {
         if (this.closestLeakPct === null || remainingPct < this.closestLeakPct) {
           this.closestLeakPct = Math.max(0, remainingPct);
@@ -255,17 +313,23 @@ export class MatchSim {
 
       if (enemy.distance >= this.pathLen) {
         enemy.alive = false;
-        this.onLeak(enemy);
+        this.onLeak(enemy, remainingPct);
         if (this.phase === "lost") return true;
       }
     }
     return false;
   }
 
-  private onLeak(enemy: SimEnemy): void {
+  private onLeak(enemy: SimEnemy, pathPct = 0): void {
     const result = applyLeak(this.lives, 1);
     this.lives = result.state;
-    this.failReason = `${enemy.kind} reached the harbor gate`;
+    this.failReason = `A ${enemy.kind} slipped through the harbor gate`;
+    this.events.push({
+      type: "life_lost",
+      enemyType: enemy.kind,
+      pathPct: Math.max(0, pathPct),
+      livesLeft: this.lives.lives,
+    });
     if (result.outcome === "fail") {
       this.phase = "lost";
     }

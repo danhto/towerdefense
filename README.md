@@ -42,12 +42,12 @@ Track iterations in [`docs/change-log.md`](docs/change-log.md).
 
 ## Build order / gate status
 
-See [`docs/gate-status.md`](docs/gate-status.md) for the live checklist.
+See [`docs/gate-status.md`](docs/gate-status.md) for the live checklist. Soft-launch: [`docs/soft-launch.md`](docs/soft-launch.md).
 
 1. G0 docs + CI scaffold — **done**
-2. G1 core loop — **done** (playable)
-3. G2 daily seed + attempts + share card — **done** (UI wired)
-4. G3 near-miss juice — partial (metric on result; juice next)
-5. G4 Practice + test ads — partial (practice + result test slot)
-6. G5 playtest scoreboard
-7. G6 soft-launch readiness
+2. G1 core loop — **done**
+3. G2 daily seed + attempts + share card — **done**
+4. G3 near-miss juice — **done**
+5. G4 Practice + test ads — **done**
+6. G5 playtest scoreboard — harness ready (**needs humans**)
+7. G6 soft-launch readiness — **code ready**

@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-05 — G3–G6 code completion (near-miss, ads, analytics)
+
+- Goal touched: G3 P6/P7; G4 T7; G5 harness; G6 analytics/consent/errors; T6 e2e
+- Change: Near-miss pulse/shake/banner; sim event drain → analytics; Practice home UX; `adService` rate cap + remove-ads/consent; rewarded practice tip; balance stamp; error handlers; playtest template + soft-launch checklist; e2e Practice after 3 attempts
+- Regression pack: PASS — lint, typecheck, 36 unit tests, build, 3 e2e
+- Metrics before → after: juice/ads/analytics stubs online; human P-metrics still pending G5
+- Alignment audit: PASS — Today’s Dare never paywalled; ads default off without consent
+- Next action: Enable Pages; run human playtest scoreboard; wire real ad/analytics sinks if soft-launching publicly
+
 ### 2026-09-05 — G1 core loop + G2 ritual wiring
 
 - Goal touched: G1 must-pass; T5/T6/T7/T8; P1–P2 smoke; near-miss field for G3
