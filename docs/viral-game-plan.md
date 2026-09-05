@@ -2,7 +2,7 @@
 
 **Overview:** Comparative analysis of why Flappy Bird exploded in 2014, how it maps to other viral game hits, the design patterns they share, and concrete new game concepts built on those commonalities.
 
-**Workspace note:** Captured from a no-repo planning chat into this repo (`towerdefense`) as the design foundation. Concept selection (A–F or hybrid) and whether the product stays Flappy-like vs. tower-defense flavored is still open — see [Recommended next step](#recommended-next-step-if-you-want-to-build).
+**Workspace note:** Captured from a no-repo planning chat into this repo (`towerdefense`) as design research. **Product lock:** Daily Dare TD hybrid (Idea B spine + Idea A near-miss) as **Daily Hold** — see [`product-target.md`](./product-target.md). Build/test gates live in [`testing-and-metrics.md`](./testing-and-metrics.md).
 
 ## What Made Flappy Bird a Craze
 
