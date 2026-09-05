@@ -19,7 +19,7 @@ Change only with a change-log entry.
 1. **Web-first PWA** (Vite + Phaser 3 + TS) → GitHub Pages; Capacitor later for stores.
 2. **Simulation is pure TypeScript** (`src/game/sim/*`). Phaser scenes only render/input — keeps Vitest honest.
 3. **Editorial Soft Defense palette** in CSS + `src/game/theme/palette.ts` (teal / coral / amber / sage / sand). Geometric placeholders until art pass.
-4. **Three towers:** Amber Bolt (single), Teal Brine (slow), Coral Burst (AoE) — color = role (P11).
+4. **Three towers:** Amber Bolt (single), Mint/Cyan Brine (slow), Coral Burst (AoE) — color = role (P11); brine stays cyan so it reads on teal grass.
 5. **One winding harbor path** map; buildable tiles off-path.
 6. **Official daily:** UTC seed, 3 attempts (persisted in `localStorage`), then Practice; share card typographic text + PNG image (no layout spoilers).
 7. **Ads:** never mid-wave; Today’s Dare never paywalled; result interstitial rate-capped; requires consent; remove-ads disables calls.

@@ -58,6 +58,8 @@ export interface SimEnemy {
   maxHp: number;
   distance: number;
   slowUntilMs: number;
+  /** Active slow multiplier while slowed (1 = none). */
+  slowFactor: number;
   alive: boolean;
   /** True while in the final ~10% of the path (G3 near-miss). */
   nearMiss: boolean;
@@ -161,7 +163,7 @@ export class MatchSim {
     this.path = harborPathWorld();
     this.pathLen = pathLength(this.path);
     this.schedule = buildSpawnSchedule(config.seed, this.waveCount);
-    this.economy = createEconomy(config.startingGold ?? 140);
+    this.economy = createEconomy(config.startingGold ?? 110);
     this.lives = createLives(config.startingLives ?? 3);
   }
 
@@ -317,6 +319,7 @@ export class MatchSim {
         maxHp: stats.hp,
         distance: 0,
         slowUntilMs: 0,
+        slowFactor: 1,
         alive: true,
         nearMiss: false,
       });
@@ -330,7 +333,7 @@ export class MatchSim {
       if (!enemy.alive) continue;
       const stats = ENEMY_STATS[enemy.kind];
       const slowed = this.elapsedMs < enemy.slowUntilMs;
-      const speed = stats.speed * (slowed ? 0.55 : 1);
+      const speed = stats.speed * (slowed ? enemy.slowFactor : 1);
       enemy.distance += (speed * dtMs) / 1000;
 
       const progress = progressAlongPath(this.path, enemy.distance);
@@ -412,6 +415,7 @@ export class MatchSim {
       enemy.hp -= damage;
       if (slowFactor < 1) {
         enemy.slowUntilMs = this.elapsedMs + 900;
+        enemy.slowFactor = Math.min(enemy.slowFactor, slowFactor);
       }
       if (enemy.hp <= 0) {
         enemy.alive = false;

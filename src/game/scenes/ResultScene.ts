@@ -150,15 +150,15 @@ export class ResultScene extends Phaser.Scene {
       this.time.delayedCall(80, () => {
         if (!this.textures.exists(key)) return;
         this.add
-          .image(width / 2, height * 0.60, key)
-          .setDisplaySize(260, 152)
+          .image(width / 2, height * 0.58, key)
+          .setDisplaySize(280, 164)
           .setName("shareCardImage");
       });
     } catch {
       /* ignore */
     }
 
-    this.button(width / 2 - 110, height * 0.74, "Copy text", async () => {
+    this.button(width / 2 - 120, height * 0.72, "Copy text", async () => {
       track({ name: "share_click", surface: "result", method: "copy" });
       try {
         await navigator.clipboard.writeText(shareText);
@@ -167,12 +167,12 @@ export class ResultScene extends Phaser.Scene {
       }
     });
 
-    this.button(width / 2 + 110, height * 0.74, "Save image", () => {
+    this.button(width / 2 + 120, height * 0.72, "Save image", () => {
       track({ name: "share_click", surface: "result", method: "native" });
       downloadShareCardImage(card);
     });
 
-    this.button(width / 2, height * 0.82, "Copy image", async () => {
+    this.button(width / 2, height * 0.80, "Copy image", async () => {
       track({ name: "share_click", surface: "result", method: "native" });
       const ok = await copyShareCardImage(card);
       if (!ok) {
@@ -184,7 +184,7 @@ export class ResultScene extends Phaser.Scene {
       }
     });
 
-    this.button(width / 2 - 90, height * 0.90, "Play again", () => {
+    this.button(width / 2 - 100, height * 0.88, "Play again", () => {
       const { dateKey, seed } = dailySeed();
       const started = startNextAttempt(dateKey);
       this.scene.start("play", {
@@ -195,7 +195,7 @@ export class ResultScene extends Phaser.Scene {
       });
     });
 
-    this.button(width / 2 + 90, height * 0.90, "Home", () => {
+    this.button(width / 2 + 100, height * 0.88, "Home", () => {
       this.scene.start("home");
     });
 
@@ -228,10 +228,10 @@ export class ResultScene extends Phaser.Scene {
     const btn = this.add
       .text(x, y, label, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 18, y: 10 },
+        padding: { x: 16, y: 12 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });

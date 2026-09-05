@@ -58,10 +58,11 @@ export function buildSpawnSchedule(
   const events: SpawnEvent[] = [];
 
   for (let wave = 0; wave < waveCount; wave++) {
-    const count = 4 + Math.floor(rng() * 4) + wave;
+    // Slightly denser packs than the first MVP pass — rewards planning.
+    const count = 5 + Math.floor(rng() * 4) + wave;
     let t = 0;
     for (let i = 0; i < count; i++) {
-      t += 400 + Math.floor(rng() * 600);
+      t += 280 + Math.floor(rng() * 420);
       const kind = KINDS[Math.floor(rng() * KINDS.length)]!;
       events.push({ waveIndex: wave, timeMs: t, kind });
     }

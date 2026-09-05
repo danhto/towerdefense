@@ -34,7 +34,7 @@ export class HomeScene extends Phaser.Scene {
       .setStrokeStyle(2, PALETTE.sage);
 
     this.add
-      .text(width / 2, height * 0.16, "Daily Hold", {
+      .text(width / 2, height * 0.14, "Daily Hold", {
         fontFamily: "Fraunces, Georgia, serif",
         fontSize: "28px",
         color: "#a8b5a0",
@@ -44,7 +44,7 @@ export class HomeScene extends Phaser.Scene {
     this.add
       .text(
         width / 2,
-        height * 0.24,
+        height * 0.22,
         practiceOnly ? "Practice Waters" : "Today’s Dare",
         {
           fontFamily: "Fraunces, Georgia, serif",
@@ -56,7 +56,7 @@ export class HomeScene extends Phaser.Scene {
       .setName("homeTitle");
 
     this.add
-      .text(width / 2, height * 0.32, dateKey, {
+      .text(width / 2, height * 0.30, dateKey, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "22px",
         color: "#e8dcc8",
@@ -65,7 +65,7 @@ export class HomeScene extends Phaser.Scene {
       .setName("dateLabel");
 
     this.add
-      .text(width / 2, height * 0.37, `Seed ${seed.toString(16)}`, {
+      .text(width / 2, height * 0.35, `Seed ${seed.toString(16)}`, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
         color: "#a8b5a0",
@@ -75,7 +75,7 @@ export class HomeScene extends Phaser.Scene {
     this.add
       .text(
         width / 2,
-        height * 0.45,
+        height * 0.42,
         practiceOnly
           ? "Official attempts used — Practice is free & unlimited"
           : `Official attempts left: ${left}`,
@@ -91,7 +91,7 @@ export class HomeScene extends Phaser.Scene {
     this.add
       .text(
         width / 2,
-        height * 0.52,
+        height * 0.48,
         practiceOnly
           ? "Same seed as Today’s Dare — never paywalled."
           : "Same harbor. Same waves. Hold the gate.",
@@ -105,12 +105,12 @@ export class HomeScene extends Phaser.Scene {
 
     const ctaLabel = practiceOnly ? "Enter Practice" : "Start attempt";
     const cta = this.add
-      .text(width / 2, height * 0.62, ctaLabel, {
+      .text(width / 2, height * 0.58, ctaLabel, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "24px",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 24, y: 14 },
+        padding: { x: 28, y: 16 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
@@ -129,7 +129,7 @@ export class HomeScene extends Phaser.Scene {
     // Privacy / ads consent stub (G6) + remove-ads (G4).
     this.toggleRow(
       width / 2,
-      height * 0.74,
+      height * 0.70,
       `Ads consent: ${getAdsConsent() ? "ON" : "OFF"}`,
       "adsConsentToggle",
       () => {
@@ -140,7 +140,7 @@ export class HomeScene extends Phaser.Scene {
 
     this.toggleRow(
       width / 2,
-      height * 0.82,
+      height * 0.78,
       `Remove ads: ${getRemoveAds() ? "ON" : "OFF"}`,
       "removeAdsToggle",
       () => {
@@ -152,7 +152,7 @@ export class HomeScene extends Phaser.Scene {
     this.add
       .text(
         width / 2,
-        height * 0.9,
+        height * 0.88,
         "Today’s Dare is never locked. Ads only between runs.",
         {
           fontFamily: "Manrope, sans-serif",
@@ -190,7 +190,7 @@ export class HomeScene extends Phaser.Scene {
         fontSize: "14px",
         color: "#e8dcc8",
         backgroundColor: "#0b3d3a",
-        padding: { x: 12, y: 8 },
+        padding: { x: 16, y: 10 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })

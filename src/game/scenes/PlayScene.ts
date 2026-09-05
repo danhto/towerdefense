@@ -63,7 +63,7 @@ export class PlayScene extends Phaser.Scene {
       mode: data.mode,
       attemptNumber: data.attemptNumber,
       waveCount: 8,
-      startingGold: 140,
+      startingGold: 110,
       startingLives: 3,
     });
   }
@@ -73,20 +73,15 @@ export class PlayScene extends Phaser.Scene {
     this.gfx = this.add.graphics();
     this.drawBoard();
 
+    const mapBottom = MAP_ROWS * TILE;
+    const chromePad = 16;
+
     this.hud = this.add
-      .text(12, 8, "", {
+      .text(chromePad, 12, "", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "16px",
         color: "#f8faf9",
-      })
-      .setDepth(20);
-
-    this.hint = this.add
-      .text(12, MAP_ROWS * TILE + 8, "", {
-        fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
-        color: "#e8dcc8",
-        wordWrap: { width: 520 },
+        lineSpacing: 4,
       })
       .setDepth(20);
 
@@ -103,19 +98,30 @@ export class PlayScene extends Phaser.Scene {
       .setAlpha(0)
       .setName("nearMissBanner");
 
-    this.buildTowerBar();
-
     this.waveBtn = this.add
-      .text(560, MAP_ROWS * TILE + 8, "Start wave", {
+      .text(720 - chromePad, mapBottom + 14, "Start wave", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "18px",
+        fontSize: "17px",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 12, y: 8 },
+        padding: { x: 16, y: 10 },
       })
+      .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
       .setName("startWaveBtn");
+
+    this.buildTowerBar();
+
+    // Hint sits under the action row so it never fights Start wave / tower chips.
+    this.hint = this.add
+      .text(chromePad, mapBottom + 112, "", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "13px",
+        color: "#e8dcc8",
+        wordWrap: { width: 688 },
+      })
+      .setDepth(20);
 
     this.waveBtn.on("pointerdown", () => {
       this.sim.startWave();
@@ -267,15 +273,27 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private buildTowerBar(): void {
-    (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind, i) => {
+    const mapBottom = MAP_ROWS * TILE;
+    const rowY = mapBottom + 58;
+    const labels: Record<TowerKind, string> = {
+      bolt: "Bolt",
+      brine: "Brine",
+      burst: "Burst",
+    };
+    const gap = 12;
+    let x = 16;
+
+    (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind) => {
       const def = TOWER_DEFS[kind];
+      const hex = `#${def.color.toString(16).padStart(6, "0")}`;
       const btn = this.add
-        .text(12 + i * 155, MAP_ROWS * TILE + 40, `${def.name} $${def.cost}`, {
+        .text(x, rowY, `${labels[kind]} $${def.cost}`, {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "13px",
+          fontSize: "14px",
+          fontStyle: "700",
           color: "#0b3d3a",
-          backgroundColor: `#${def.color.toString(16).padStart(6, "0")}`,
-          padding: { x: 8, y: 6 },
+          backgroundColor: hex,
+          padding: { x: 12, y: 10 },
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(20)
@@ -288,15 +306,18 @@ export class PlayScene extends Phaser.Scene {
         this.sim.selectTowerKind(kind);
         this.refreshHud(this.sim.snapshot());
       });
+      x += btn.width + gap;
     });
 
+    // Push Sell / Upgrade to the right with clear separation from tower chips.
     const sell = this.add
-      .text(480, MAP_ROWS * TILE + 40, "Sell", {
+      .text(448, rowY, "Sell", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
+        fontSize: "14px",
+        fontStyle: "700",
         color: "#f8faf9",
-        backgroundColor: "#78716c",
-        padding: { x: 8, y: 6 },
+        backgroundColor: "#57534e",
+        padding: { x: 14, y: 10 },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -309,12 +330,13 @@ export class PlayScene extends Phaser.Scene {
     });
 
     this.upgradeBtn = this.add
-      .text(560, MAP_ROWS * TILE + 40, "Upgrade", {
+      .text(sell.x + sell.width + gap, rowY, "Upgrade", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "13px",
+        fontSize: "14px",
+        fontStyle: "700",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 8, y: 6 },
+        padding: { x: 14, y: 10 },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -358,17 +380,21 @@ export class PlayScene extends Phaser.Scene {
       const def = towerStats(tower.kind, tower.tier);
       const selected =
         this.selectedCol === tower.col && this.selectedRow === tower.row;
+      const radius = tower.tier >= 2 ? 18 : 16;
       this.gfx.fillStyle(def.color, 1);
-      this.gfx.fillCircle(tower.x, tower.y, tower.tier >= 2 ? 18 : 16);
+      this.gfx.fillCircle(tower.x, tower.y, radius);
+      // Always stroke towers so mint/teal never vanish into grass.
+      this.gfx.lineStyle(3, PALETTE.foam, 0.95);
+      this.gfx.strokeCircle(tower.x, tower.y, radius + 1);
       if (tower.tier >= 2) {
         this.gfx.lineStyle(3, PALETTE.amber, 0.95);
-        this.gfx.strokeCircle(tower.x, tower.y, 22);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 5);
       }
       if (selected) {
-        this.gfx.lineStyle(2, PALETTE.foam, 0.9);
-        this.gfx.strokeCircle(tower.x, tower.y, 26);
+        this.gfx.lineStyle(2, PALETTE.sand, 1);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 9);
       }
-      this.gfx.lineStyle(1, PALETTE.foam, 0.3);
+      this.gfx.lineStyle(1, PALETTE.foam, 0.28);
       this.gfx.strokeCircle(tower.x, tower.y, def.range);
     }
 
@@ -420,7 +446,7 @@ export class PlayScene extends Phaser.Scene {
     this.hint.setText(
       snap.nearMissActive
         ? "Near miss — stop them at the harbor gate!"
-        : "Tap teal to place · tap a tower to upgrade · Start wave when ready",
+        : "Tap grass to place · select a tower to upgrade · Start wave when ready",
     );
     this.waveBtn.setVisible(snap.phase === "build");
     const canUpgrade =
