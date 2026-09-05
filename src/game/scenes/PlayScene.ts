@@ -79,9 +79,9 @@ export class PlayScene extends Phaser.Scene {
     this.hud = this.add
       .text(chromePad, 12, "", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "16px",
+        fontSize: "15px",
         color: "#f8faf9",
-        lineSpacing: 4,
+        lineSpacing: 8,
       })
       .setDepth(20);
 
@@ -98,37 +98,17 @@ export class PlayScene extends Phaser.Scene {
       .setAlpha(0)
       .setName("nearMissBanner");
 
-    this.waveBtn = this.add
-      .text(720 - chromePad, mapBottom + 14, "Start wave", {
-        fontFamily: "Manrope, sans-serif",
-        fontSize: "17px",
-        color: "#0b3d3a",
-        backgroundColor: "#e8dcc8",
-        padding: { x: 16, y: 10 },
-      })
-      .setOrigin(1, 0)
-      .setInteractive({ useHandCursor: true })
-      .setDepth(20)
-      .setName("startWaveBtn");
-
     this.buildTowerBar();
 
-    // Hint sits under the action row so it never fights Start wave / tower chips.
+    // Hint under the single action row — keeps chrome one band, not stacked fights.
     this.hint = this.add
-      .text(chromePad, mapBottom + 112, "", {
+      .text(chromePad, mapBottom + 108, "", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
         color: "#e8dcc8",
         wordWrap: { width: 688 },
       })
       .setDepth(20);
-
-    this.waveBtn.on("pointerdown", () => {
-      this.sim.startWave();
-      this.refreshHud(this.sim.snapshot());
-      this.emitSimEvents();
-    });
-
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (pointer.y >= MAP_ROWS * TILE) return;
       const col = Math.floor(pointer.x / TILE);
@@ -274,13 +254,13 @@ export class PlayScene extends Phaser.Scene {
 
   private buildTowerBar(): void {
     const mapBottom = MAP_ROWS * TILE;
-    const rowY = mapBottom + 58;
+    const rowY = mapBottom + 52;
     const labels: Record<TowerKind, string> = {
       bolt: "Bolt",
       brine: "Brine",
       burst: "Burst",
     };
-    const gap = 12;
+    const gap = 14;
     let x = 16;
 
     (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind) => {
@@ -309,9 +289,8 @@ export class PlayScene extends Phaser.Scene {
       x += btn.width + gap;
     });
 
-    // Push Sell / Upgrade to the right with clear separation from tower chips.
     const sell = this.add
-      .text(448, rowY, "Sell", {
+      .text(x + 8, rowY, "Sell", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
         fontStyle: "700",
@@ -349,6 +328,26 @@ export class PlayScene extends Phaser.Scene {
         this.emitSimEvents();
       }
     });
+
+    // Same row as tower chips — right-aligned so chrome is one band.
+    this.waveBtn = this.add
+      .text(720 - 16, rowY, "Start wave", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "15px",
+        fontStyle: "700",
+        color: "#0b3d3a",
+        backgroundColor: "#e8dcc8",
+        padding: { x: 14, y: 10 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .setDepth(20)
+      .setName("startWaveBtn");
+    this.waveBtn.on("pointerdown", () => {
+      this.sim.startWave();
+      this.refreshHud(this.sim.snapshot());
+      this.emitSimEvents();
+    });
   }
 
   private drawBoard(): void {
@@ -383,16 +382,18 @@ export class PlayScene extends Phaser.Scene {
       const radius = tower.tier >= 2 ? 18 : 16;
       this.gfx.fillStyle(def.color, 1);
       this.gfx.fillCircle(tower.x, tower.y, radius);
-      // Always stroke towers so mint/teal never vanish into grass.
-      this.gfx.lineStyle(3, PALETTE.foam, 0.95);
+      // Dark outer + foam inner so ice/cyan brine never vanishes into grass.
+      this.gfx.lineStyle(4, PALETTE.ink, 0.95);
       this.gfx.strokeCircle(tower.x, tower.y, radius + 1);
+      this.gfx.lineStyle(2, PALETTE.foam, 1);
+      this.gfx.strokeCircle(tower.x, tower.y, radius - 1);
       if (tower.tier >= 2) {
         this.gfx.lineStyle(3, PALETTE.amber, 0.95);
-        this.gfx.strokeCircle(tower.x, tower.y, radius + 5);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 6);
       }
       if (selected) {
         this.gfx.lineStyle(2, PALETTE.sand, 1);
-        this.gfx.strokeCircle(tower.x, tower.y, radius + 9);
+        this.gfx.strokeCircle(tower.x, tower.y, radius + 10);
       }
       this.gfx.lineStyle(1, PALETTE.foam, 0.28);
       this.gfx.strokeCircle(tower.x, tower.y, def.range);
