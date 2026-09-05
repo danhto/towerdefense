@@ -29,9 +29,13 @@ import {
   type Point,
 } from "./path";
 import {
-  sellRefund,
+  MAX_TOWER_TIER,
+  sellRefundForTower,
   TOWER_DEFS,
+  towerStats,
+  upgradeCost,
   type TowerKind,
+  type TowerTier,
 } from "./towers";
 
 export type MatchPhase = "build" | "wave" | "won" | "lost";
@@ -39,6 +43,7 @@ export type MatchPhase = "build" | "wave" | "won" | "lost";
 export interface PlacedTower {
   id: number;
   kind: TowerKind;
+  tier: TowerTier;
   col: number;
   row: number;
   x: number;
@@ -109,7 +114,14 @@ export type SimEvent =
       row: number;
       elapsedMs: number;
     }
-  | { type: "wave_started"; waveIndex: number };
+  | { type: "wave_started"; waveIndex: number }
+  | {
+      type: "tower_upgraded";
+      towerType: TowerKind;
+      tier: TowerTier;
+      col: number;
+      row: number;
+    };
 
 export class MatchSim {
   readonly path: Point[];
@@ -205,6 +217,7 @@ export class MatchSim {
     this.towers.push({
       id: this.nextTowerId++,
       kind: def.kind,
+      tier: 1,
       col,
       row,
       x: col * TILE + TILE / 2,
@@ -226,8 +239,34 @@ export class MatchSim {
     const idx = this.towers.findIndex((t) => t.col === col && t.row === row);
     if (idx < 0) return false;
     const tower = this.towers[idx]!;
-    this.economy = earn(this.economy, sellRefund(TOWER_DEFS[tower.kind].cost));
+    this.economy = earn(this.economy, sellRefundForTower(tower.kind, tower.tier));
     this.towers.splice(idx, 1);
+    return true;
+  }
+
+  canUpgradeAt(col: number, row: number): boolean {
+    if (this.phase === "won" || this.phase === "lost") return false;
+    const tower = this.towers.find((t) => t.col === col && t.row === row);
+    if (!tower) return false;
+    if (tower.tier >= MAX_TOWER_TIER) return false;
+    const cost = upgradeCost(tower.kind, tower.tier);
+    if (cost === null) return false;
+    return canAfford(this.economy, cost);
+  }
+
+  tryUpgradeAt(col: number, row: number): boolean {
+    if (!this.canUpgradeAt(col, row)) return false;
+    const tower = this.towers.find((t) => t.col === col && t.row === row)!;
+    const cost = upgradeCost(tower.kind, tower.tier)!;
+    this.economy = spend(this.economy, cost);
+    tower.tier = (tower.tier + 1) as TowerTier;
+    this.events.push({
+      type: "tower_upgraded",
+      towerType: tower.kind,
+      tier: tower.tier,
+      col,
+      row,
+    });
     return true;
   }
 
@@ -339,7 +378,7 @@ export class MatchSim {
     for (const tower of this.towers) {
       tower.cooldownMs = Math.max(0, tower.cooldownMs - dtMs);
       if (tower.cooldownMs > 0) continue;
-      const def = TOWER_DEFS[tower.kind];
+      const def = towerStats(tower.kind, tower.tier);
       const target = this.findTarget(tower.x, tower.y, def.range);
       if (!target) continue;
       tower.cooldownMs = def.fireIntervalMs;

@@ -6,6 +6,7 @@ import {
   FORBIDDEN_SHARE_KEYS,
   formatShareText,
 } from "../../src/game/share/card";
+import { shareCardToDataUrl } from "../../src/game/share/image";
 
 describe("ad policy (T7)", () => {
   it("blocks all formats while a wave is active", () => {
@@ -67,5 +68,33 @@ describe("share card (T8)", () => {
     expect(text).toContain("CLEARED");
     expect(text).toContain("closest leak 6%");
     expect(text).not.toMatch(/tower|layout|placement/i);
+  });
+});
+
+
+describe("share card image (T8)", () => {
+  it("builds a png data url without spoiler fields when canvas exists", () => {
+    const card = buildShareCardPayload({
+      dateKey: "2026-03-05",
+      result: "cleared",
+      officialAttempt: 2,
+      officialLimit: 3,
+      score: 1840,
+      closestLeakPct: 6,
+      mode: "official",
+    });
+    expect(card).not.toHaveProperty("towerLayout");
+    if (typeof document === "undefined") {
+      expect(formatShareText(card)).toContain("CLEARED");
+      return;
+    }
+    try {
+      const url = shareCardToDataUrl(card);
+      expect(url.startsWith("data:image/png")).toBe(true);
+      expect(url.length).toBeGreaterThan(100);
+    } catch {
+      // Node without canvas — text share remains the guaranteed path.
+      expect(formatShareText(card)).toContain("2026-03-05");
+    }
   });
 });

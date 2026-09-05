@@ -31,7 +31,7 @@ Working title: **Daily Hold**.
 - 8–12 seeded waves
 - 3 official attempts/day → further runs are Practice
 - Near-miss metrics on result
-- Share card image
+- Share card image (typographic PNG)
 - Test ad placements
 
 ## Out of MVP

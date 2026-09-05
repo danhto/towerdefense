@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-05 — MVP gaps: tower upgrades + share card image
+
+- Goal touched: MVP scope (2 upgrade tiers; share image); T8; P8/P9
+- Change: Tier 1→2 upgrades with invested-gold sell refunds; PlayScene select/upgrade UX; canvas PNG share card (save/copy) on result; unit coverage
+- Regression pack: PASS — lint, typecheck, 39 unit, build, 3 e2e
+- Metrics before → after: MVP code gaps closed; human G5 still pending
+- Alignment audit: PASS — share image remains spoiler-free (no layout)
+- Next action: Enable Pages; human playtest scoreboard; real ad/analytics sinks
+
 ### 2026-09-05 — G3–G6 code completion (near-miss, ads, analytics)
 
 - Goal touched: G3 P6/P7; G4 T7; G5 harness; G6 analytics/consent/errors; T6 e2e
