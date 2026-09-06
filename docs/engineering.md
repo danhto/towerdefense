@@ -11,7 +11,7 @@ Local development and GitHub Actions for the web PWA stack.
 | Game runtime | Phaser 3 |
 | Unit tests | Vitest |
 | E2E | Playwright (Chromium) |
-| Hosting | GitHub Pages (`/towerdefense/` base) |
+| Hosting | GitHub Pages — https://danhto.github.io/towerdefense/ (`/towerdefense/` base) |
 | Stores (later) | Capacitor wrap — not in MVP |
 
 ## Local commands
@@ -84,3 +84,10 @@ Manual playtest metrics (P1–P12) remain in [testing-and-metrics.md](./testing-
 VITE_ADS_MODE=test   # default for Pages / local
 VITE_ADS_MODE=off    # disable ad policy paths in UI later
 ```
+
+## Playtest URLs
+
+- Live: https://danhto.github.io/towerdefense/
+- Force first-run tour: https://danhto.github.io/towerdefense/?tutorial=1 (or home **Replay tour** toggle)
+- Agents: after every PR, include the Pages link in the summary (see `.cursor/rules/pr-github-pages-link.mdc`)
+

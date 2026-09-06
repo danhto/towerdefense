@@ -11,7 +11,12 @@ import {
   setAdsConsent,
   setRemoveAds,
 } from "../meta/settings";
-import { hasCompletedTutorial } from "../meta/tutorial";
+import {
+  bootstrapTutorialFromUrl,
+  isTutorialForced,
+  setTutorialForced,
+  shouldShowTutorial,
+} from "../meta/tutorial";
 import { tryShowBanner } from "../systems/adService";
 import { PALETTE } from "../theme/palette";
 
@@ -21,6 +26,8 @@ export class HomeScene extends Phaser.Scene {
   }
 
   create(): void {
+    bootstrapTutorialFromUrl();
+
     const { width, height } = this.scale;
     const { dateKey, seed } = dailySeed();
     const attempts = loadAttempts(dateKey);
@@ -118,13 +125,20 @@ export class HomeScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
-    if (!hasCompletedTutorial()) {
+    if (shouldShowTutorial()) {
       this.add
-        .text(width / 2, height * 0.53, "First run includes a 20-second tour.", {
-          fontFamily: "Manrope, sans-serif",
-          fontSize: "14px",
-          color: "#a8b5a0",
-        })
+        .text(
+          width / 2,
+          height * 0.53,
+          isTutorialForced()
+            ? "Tour armed — starts on the next attempt."
+            : "First run includes a 20-second tour.",
+          {
+            fontFamily: "Manrope, sans-serif",
+            fontSize: "14px",
+            color: "#a8b5a0",
+          },
+        )
         .setOrigin(0.5);
     }
 
@@ -160,10 +174,22 @@ export class HomeScene extends Phaser.Scene {
       });
     });
 
+    // Replay tour for PR playtests — also available via ?tutorial=1.
+    this.toggleRow(
+      width / 2,
+      height * 0.66,
+      `Replay tour: ${isTutorialForced() ? "ON" : "OFF"}`,
+      "replayTourToggle",
+      () => {
+        setTutorialForced(!isTutorialForced());
+        this.scene.restart();
+      },
+    );
+
     // Privacy / ads consent stub (G6) + remove-ads (G4).
     this.toggleRow(
       width / 2,
-      height * 0.70,
+      height * 0.73,
       `Ads consent: ${getAdsConsent() ? "ON" : "OFF"}`,
       "adsConsentToggle",
       () => {
@@ -174,7 +200,7 @@ export class HomeScene extends Phaser.Scene {
 
     this.toggleRow(
       width / 2,
-      height * 0.78,
+      height * 0.80,
       `Remove ads: ${getRemoveAds() ? "ON" : "OFF"}`,
       "removeAdsToggle",
       () => {

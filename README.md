@@ -1,5 +1,9 @@
 # towerdefense / Daily Hold
 
+**Play (GitHub Pages):** https://danhto.github.io/towerdefense/  
+**Replay first-run tour:** https://danhto.github.io/towerdefense/?tutorial=1
+
+
 Web-first daily-dare tower defense.
 
 ## Locked product
