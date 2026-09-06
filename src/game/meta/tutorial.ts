@@ -102,7 +102,27 @@ export function bootstrapTutorialFromUrl(
 ): boolean {
   try {
     const params = new URLSearchParams(search);
-    const flag = params.get("tutorial") ?? params.get("tour");
+    let flag = params.get("tutorial") ?? params.get("tour");
+
+    // Hash fallback: /towerdefense/#tutorial=1 (survives some redirects).
+    if (!flag && typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash.replace(/^#/, "");
+      const hashParams = new URLSearchParams(
+        hash.includes("=") || hash.includes("&") ? hash : "",
+      );
+      flag = hashParams.get("tutorial") ?? hashParams.get("tour");
+      if (!flag && (hash === "tutorial" || hash === "tour")) flag = "1";
+    }
+
+    // Last resort: bare query accidentally stuck after the path.
+    if (
+      !flag &&
+      typeof window !== "undefined" &&
+      /[?&#](?:tutorial|tour)=(?:1|true)\b/.test(window.location.href)
+    ) {
+      flag = "1";
+    }
+
     if (flag === "1" || flag === "true") {
       setTutorialForced(true);
       return true;

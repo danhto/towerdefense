@@ -26,7 +26,7 @@ export class HomeScene extends Phaser.Scene {
   }
 
   create(): void {
-    bootstrapTutorialFromUrl();
+    const fromUrl = bootstrapTutorialFromUrl();
 
     const { width, height } = this.scale;
     const { dateKey, seed } = dailySeed();
@@ -130,9 +130,11 @@ export class HomeScene extends Phaser.Scene {
         .text(
           width / 2,
           height * 0.53,
-          isTutorialForced()
-            ? "Tour armed — starts on the next attempt."
-            : "First run includes a 20-second tour.",
+          fromUrl
+            ? "Opening the harbor tour…"
+            : isTutorialForced()
+              ? "Tour armed — tap Start attempt."
+              : "First run includes a 20-second tour.",
           {
             fontFamily: "Manrope, sans-serif",
             fontSize: "14px",
@@ -164,7 +166,7 @@ export class HomeScene extends Phaser.Scene {
       ease: "Sine.easeOut",
     });
 
-    cta.on("pointerdown", () => {
+    const enterPlay = () => {
       const started = startNextAttempt(dateKey);
       this.scene.start("play", {
         seed,
@@ -172,7 +174,18 @@ export class HomeScene extends Phaser.Scene {
         mode: started.mode,
         attemptNumber: started.attemptNumber,
       });
-    });
+    };
+
+    cta.on("pointerdown", enterPlay);
+
+    // ?tutorial=1 should show the coach immediately — don't stop on the home screen.
+    if (fromUrl) {
+      this.time.delayedCall(200, enterPlay);
+      // Fallback if the Phaser clock hasn't ticked yet (preview/playtest quirks).
+      window.setTimeout(() => {
+        if (this.scene.isActive("home")) enterPlay();
+      }, 500);
+    }
 
     // Replay tour for PR playtests — also available via ?tutorial=1.
     this.toggleRow(
