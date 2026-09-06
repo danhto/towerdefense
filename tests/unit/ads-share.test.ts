@@ -5,7 +5,9 @@ import {
   buildShareCardPayload,
   FORBIDDEN_SHARE_KEYS,
   formatClearTime,
+  formatLoadoutHint,
   formatShareText,
+  uniqueTowerKinds,
 } from "../../src/game/share/card";
 import { shareCardToDataUrl } from "../../src/game/share/image";
 
@@ -60,19 +62,22 @@ describe("share card (T8)", () => {
       clearTimeMs: 102_000,
       closestLeakPct: 6,
       mode: "official",
+      towerKinds: ["burst", "bolt", "bolt", "brine"],
     });
     assertNoSpoilers(card);
     for (const key of FORBIDDEN_SHARE_KEYS) {
       expect(card).not.toHaveProperty(key);
     }
+    expect(card.towerKinds).toEqual(["bolt", "brine", "burst"]);
     const text = formatShareText(card);
     expect(text).toContain("2026-03-05");
     expect(text).toContain("CLEARED");
     expect(text).toContain("2/3");
     expect(text).toContain("closest leak 6%");
     expect(text).toContain("1:42 clear");
+    expect(text).toContain("Held with Bolt · Brine · Burst");
     expect(text).not.toMatch(/speed\s*\+/i);
-    expect(text).not.toMatch(/tower|layout|placement/i);
+    expect(text).not.toMatch(/layout|placement|×\d|x\d/i);
   });
 
   it("never shows 4/3 for practice clears", () => {
@@ -85,18 +90,32 @@ describe("share card (T8)", () => {
       clearTimeMs: 95_000,
       closestLeakPct: null,
       mode: "practice",
+      towerKinds: ["bolt"],
     });
     const text = formatShareText(card);
     expect(text).toContain("CLEARED  practice");
     expect(text).not.toMatch(/\d+\/\d+/);
     expect(text).not.toContain("4/3");
     expect(card.officialAttempt).toBe(3);
+    expect(text).toContain("Held with Bolt");
   });
 
   it("formats clear time as m:ss", () => {
     expect(formatClearTime(0)).toBe("0:00");
     expect(formatClearTime(1_000)).toBe("0:01");
     expect(formatClearTime(65_000)).toBe("1:05");
+  });
+
+  it("formats loadout hints without counts or positions", () => {
+    expect(uniqueTowerKinds(["burst", "bolt", "bolt"])).toEqual([
+      "bolt",
+      "burst",
+    ]);
+    expect(formatLoadoutHint("cleared", ["bolt", "brine"])).toBe(
+      "Held with Bolt + Brine",
+    );
+    expect(formatLoadoutHint("failed", ["burst"])).toBe("Ran Burst");
+    expect(formatLoadoutHint("cleared", [])).toBeNull();
   });
 });
 
@@ -111,6 +130,7 @@ describe("share card image (T8)", () => {
       clearTimeMs: 90_000,
       closestLeakPct: 6,
       mode: "official",
+      towerKinds: ["bolt", "brine"],
     });
     expect(card).not.toHaveProperty("towerLayout");
     if (typeof document === "undefined") {
@@ -122,7 +142,6 @@ describe("share card image (T8)", () => {
       expect(url.startsWith("data:image/png")).toBe(true);
       expect(url.length).toBeGreaterThan(100);
     } catch {
-      // Node without canvas — text share remains the guaranteed path.
       expect(formatShareText(card)).toContain("2026-03-05");
     }
   });

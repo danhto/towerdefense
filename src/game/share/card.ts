@@ -1,6 +1,10 @@
 /**
  * Spoiler-free share card (metric T8) — typographic only, no layout.
+ *
+ * Tower *kinds* used are allowed as a loadout hint (no counts, no positions).
  */
+
+import type { TowerKind } from "../sim/towers";
 
 export interface ShareCardPayload {
   title: string;
@@ -13,6 +17,39 @@ export interface ShareCardPayload {
   clearTimeMs: number | null;
   closestLeakPct: number | null;
   mode: "official" | "practice";
+  /** Unique tower kinds used this run (ordered); never counts or positions. */
+  towerKinds: TowerKind[];
+}
+
+const KIND_ORDER: TowerKind[] = ["bolt", "brine", "burst"];
+
+const KIND_LABEL: Record<TowerKind, string> = {
+  bolt: "Bolt",
+  brine: "Brine",
+  burst: "Burst",
+};
+
+/** Stable unique kinds from a run — no counts, no placement data. */
+export function uniqueTowerKinds(kinds: readonly TowerKind[]): TowerKind[] {
+  const seen = new Set(kinds);
+  return KIND_ORDER.filter((k) => seen.has(k));
+}
+
+/** Spoiler-free loadout line, or null if no towers were placed. */
+export function formatLoadoutHint(
+  result: "cleared" | "failed",
+  kinds: readonly TowerKind[],
+): string | null {
+  const unique = uniqueTowerKinds(kinds);
+  if (unique.length === 0) return null;
+  const labels = unique.map((k) => KIND_LABEL[k]);
+  const joined =
+    labels.length === 1
+      ? labels[0]!
+      : labels.length === 2
+        ? `${labels[0]} + ${labels[1]}`
+        : labels.join(" · ");
+  return result === "cleared" ? `Held with ${joined}` : `Ran ${joined}`;
 }
 
 /** Format ms as m:ss for share / HUD clocks. */
@@ -32,6 +69,7 @@ export function buildShareCardPayload(input: {
   clearTimeMs?: number | null;
   closestLeakPct: number | null;
   mode: "official" | "practice";
+  towerKinds?: readonly TowerKind[];
 }): ShareCardPayload {
   const {
     dateKey,
@@ -42,6 +80,7 @@ export function buildShareCardPayload(input: {
     clearTimeMs = null,
     closestLeakPct,
     mode,
+    towerKinds = [],
   } = input;
 
   if (!dateKey) throw new Error("dateKey required");
@@ -73,6 +112,7 @@ export function buildShareCardPayload(input: {
     clearTimeMs: result === "cleared" ? clearTimeMs : null,
     closestLeakPct,
     mode,
+    towerKinds: uniqueTowerKinds(towerKinds),
   };
 }
 
@@ -91,11 +131,14 @@ export function formatShareText(card: ShareCardPayload): string {
     card.clearTimeMs !== null
       ? `${card.score}  ·  ${formatClearTime(card.clearTimeMs)} clear  ·  ${near}`
       : `${card.score}  ·  ${near}`;
-  return [
+  const lines = [
     `${card.title} — ${card.dateKey}`,
     `${status}  ${attempt}`,
     scoreLine,
-  ].join("\n");
+  ];
+  const loadout = formatLoadoutHint(card.result, card.towerKinds);
+  if (loadout) lines.push(loadout);
+  return lines.join("\n");
 }
 
 export const FORBIDDEN_SHARE_KEYS = [
@@ -103,6 +146,8 @@ export const FORBIDDEN_SHARE_KEYS = [
   "placements",
   "mapScreenshot",
   "replayFrames",
+  "towerCounts",
+  "towerPositions",
 ] as const;
 
 export function assertNoSpoilers(card: ShareCardPayload): void {
@@ -110,6 +155,12 @@ export function assertNoSpoilers(card: ShareCardPayload): void {
   for (const bad of FORBIDDEN_SHARE_KEYS) {
     if (keys.includes(bad)) {
       throw new Error(`share card must not include ${bad}`);
+    }
+  }
+  // Guard: kinds list must never smuggle counts/coords.
+  for (const kind of card.towerKinds) {
+    if (kind !== "bolt" && kind !== "brine" && kind !== "burst") {
+      throw new Error(`invalid tower kind on share card: ${String(kind)}`);
     }
   }
 }

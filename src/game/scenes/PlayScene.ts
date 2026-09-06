@@ -37,6 +37,8 @@ export class PlayScene extends Phaser.Scene {
   private nearMissBanner!: Phaser.GameObjects.Text;
   private waveBtn!: Phaser.GameObjects.Text;
   private selectedKind: TowerKind = "bolt";
+  private readonly towerButtons = new Map<TowerKind, Phaser.GameObjects.Text>();
+  private sellBtn!: Phaser.GameObjects.Text;
   private sellMode = false;
   private selectedCol: number | null = null;
   private selectedRow: number | null = null;
@@ -268,6 +270,7 @@ export class PlayScene extends Phaser.Scene {
     const gap = 14;
     let x = 16;
 
+    this.towerButtons.clear();
     (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind) => {
       const def = TOWER_DEFS[kind];
       const hex = `#${def.color.toString(16).padStart(6, "0")}`;
@@ -282,19 +285,22 @@ export class PlayScene extends Phaser.Scene {
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(20)
-        .setName(`tower-${kind}`);
+        .setName(`tower-${kind}`)
+        .setOrigin(0, 0);
       btn.on("pointerdown", () => {
         this.selectedKind = kind;
         this.sellMode = false;
         this.selectedCol = null;
         this.selectedRow = null;
         this.sim.selectTowerKind(kind);
+        this.refreshTowerBarSelection();
         this.refreshHud(this.sim.snapshot());
       });
+      this.towerButtons.set(kind, btn);
       x += btn.width + gap;
     });
 
-    const sell = this.add
+    this.sellBtn = this.add
       .text(x + 8, rowY, "Sell", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
@@ -305,16 +311,18 @@ export class PlayScene extends Phaser.Scene {
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
-      .setName("sellBtn");
-    sell.on("pointerdown", () => {
+      .setName("sellBtn")
+      .setOrigin(0, 0);
+    this.sellBtn.on("pointerdown", () => {
       this.sellMode = true;
       this.selectedCol = null;
       this.selectedRow = null;
+      this.refreshTowerBarSelection();
       this.refreshHud(this.sim.snapshot());
     });
 
     this.upgradeBtn = this.add
-      .text(sell.x + sell.width + gap, rowY, "Upgrade", {
+      .text(this.sellBtn.x + this.sellBtn.width + gap, rowY, "Upgrade", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
         fontStyle: "700",
@@ -353,6 +361,48 @@ export class PlayScene extends Phaser.Scene {
       this.refreshHud(this.sim.snapshot());
       this.emitSimEvents();
     });
+
+    this.refreshTowerBarSelection();
+  }
+
+  /** Highlight the active place/sell chip so the loadout choice is obvious. */
+  private refreshTowerBarSelection(): void {
+    const labels: Record<TowerKind, string> = {
+      bolt: "Bolt",
+      brine: "Brine",
+      burst: "Burst",
+    };
+    for (const kind of Object.keys(TOWER_DEFS) as TowerKind[]) {
+      const btn = this.towerButtons.get(kind);
+      if (!btn) continue;
+      const def = TOWER_DEFS[kind];
+      const hex = `#${def.color.toString(16).padStart(6, "0")}`;
+      const selected = !this.sellMode && this.selectedKind === kind;
+      btn.setText(
+        selected
+          ? `▸ ${labels[kind]} $${def.cost}`
+          : `${labels[kind]} $${def.cost}`,
+      );
+      btn.setStyle({
+        fontFamily: "Manrope, sans-serif",
+        fontSize: selected ? "15px" : "14px",
+        fontStyle: "700",
+        color: "#0b3d3a",
+        backgroundColor: hex,
+        padding: { x: selected ? 14 : 12, y: selected ? 12 : 10 },
+      });
+      btn.setAlpha(this.sellMode ? 0.4 : selected ? 1 : 0.55);
+      btn.setScale(selected ? 1.06 : 1);
+      if (selected) btn.setStroke("#e8dcc8", 5);
+      else btn.setStroke("#000000", 0);
+    }
+    if (this.sellBtn) {
+      this.sellBtn.setAlpha(this.sellMode ? 1 : 0.65);
+      this.sellBtn.setScale(this.sellMode ? 1.06 : 1);
+      this.sellBtn.setText(this.sellMode ? "▸ Sell" : "Sell");
+      if (this.sellMode) this.sellBtn.setStroke("#e8dcc8", 5);
+      else this.sellBtn.setStroke("#000000", 0);
+    }
   }
 
   private drawBoard(): void {
@@ -456,7 +506,7 @@ export class PlayScene extends Phaser.Scene {
           ? `Selected ${stats.name} (max tier)`
           : `Selected ${stats.name} — upgrade $${next}`;
     } else {
-      modeLine = `Place: ${TOWER_DEFS[this.selectedKind].name}`;
+      modeLine = `Placing ${TOWER_DEFS[this.selectedKind].name} — tap grass`;
     }
     this.hud.setText(
       [
