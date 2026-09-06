@@ -19,6 +19,11 @@ import {
 } from "../sim/towers";
 import { tryShowBanner } from "../systems/adService";
 import { formatClearTime } from "../share/card";
+import {
+  SELL_CHIP_TEXT,
+  SELECTION_LAYOUT_INVARIANTS,
+  towerChipText,
+} from "../ui/actionBarLayout";
 import { PALETTE } from "../theme/palette";
 
 export interface PlaySceneData {
@@ -262,26 +267,24 @@ export class PlayScene extends Phaser.Scene {
   private buildTowerBar(): void {
     const mapBottom = MAP_ROWS * TILE;
     const rowY = mapBottom + 52;
-    const labels: Record<TowerKind, string> = {
-      bolt: "Bolt",
-      brine: "Brine",
-      burst: "Burst",
-    };
-    const gap = 14;
+    const { fontSizePx, paddingX, paddingY, minGapPx } =
+      SELECTION_LAYOUT_INVARIANTS;
+    const gap = Math.max(14, minGapPx);
     let x = 16;
 
     this.towerButtons.clear();
     (Object.keys(TOWER_DEFS) as TowerKind[]).forEach((kind) => {
       const def = TOWER_DEFS[kind];
       const hex = `#${def.color.toString(16).padStart(6, "0")}`;
+      // Label is fixed forever — selection must not append markers or grow type.
       const btn = this.add
-        .text(x, rowY, `${labels[kind]} $${def.cost}`, {
+        .text(x, rowY, towerChipText(kind, def.cost), {
           fontFamily: "Manrope, sans-serif",
-          fontSize: "14px",
+          fontSize: `${fontSizePx}px`,
           fontStyle: "700",
           color: "#0b3d3a",
           backgroundColor: hex,
-          padding: { x: 12, y: 10 },
+          padding: { x: paddingX, y: paddingY },
         })
         .setInteractive({ useHandCursor: true })
         .setDepth(20)
@@ -301,13 +304,13 @@ export class PlayScene extends Phaser.Scene {
     });
 
     this.sellBtn = this.add
-      .text(x + 8, rowY, "Sell", {
+      .text(x + 8, rowY, SELL_CHIP_TEXT, {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
+        fontSize: `${fontSizePx}px`,
         fontStyle: "700",
         color: "#f8faf9",
         backgroundColor: "#57534e",
-        padding: { x: 14, y: 10 },
+        padding: { x: paddingX, y: paddingY },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -324,11 +327,11 @@ export class PlayScene extends Phaser.Scene {
     this.upgradeBtn = this.add
       .text(this.sellBtn.x + this.sellBtn.width + gap, rowY, "Upgrade", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "14px",
+        fontSize: `${fontSizePx}px`,
         fontStyle: "700",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 14, y: 10 },
+        padding: { x: paddingX, y: paddingY },
       })
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
@@ -346,11 +349,11 @@ export class PlayScene extends Phaser.Scene {
     this.waveBtn = this.add
       .text(720 - 16, rowY, "Start wave", {
         fontFamily: "Manrope, sans-serif",
-        fontSize: "15px",
+        fontSize: `${fontSizePx}px`,
         fontStyle: "700",
         color: "#0b3d3a",
         backgroundColor: "#e8dcc8",
-        padding: { x: 14, y: 10 },
+        padding: { x: paddingX, y: paddingY },
       })
       .setOrigin(1, 0)
       .setInteractive({ useHandCursor: true })
@@ -365,43 +368,50 @@ export class PlayScene extends Phaser.Scene {
     this.refreshTowerBarSelection();
   }
 
-  /** Highlight the active place/sell chip so the loadout choice is obvious. */
+  /**
+   * Highlight active place/sell chip without resizing.
+   * Selection is alpha + thin sand stroke only — never text/scale/padding/fontSize
+   * (those caused Burst to overlap Sell and ▸ to cover Sell's label).
+   */
   private refreshTowerBarSelection(): void {
-    const labels: Record<TowerKind, string> = {
-      bolt: "Bolt",
-      brine: "Brine",
-      burst: "Burst",
-    };
+    const { fontSizePx, paddingX, paddingY, scale, selectedStrokePx, unselectedStrokePx } =
+      SELECTION_LAYOUT_INVARIANTS;
     for (const kind of Object.keys(TOWER_DEFS) as TowerKind[]) {
       const btn = this.towerButtons.get(kind);
       if (!btn) continue;
       const def = TOWER_DEFS[kind];
       const hex = `#${def.color.toString(16).padStart(6, "0")}`;
       const selected = !this.sellMode && this.selectedKind === kind;
-      btn.setText(
-        selected
-          ? `▸ ${labels[kind]} $${def.cost}`
-          : `${labels[kind]} $${def.cost}`,
-      );
+      // Keep label identical in every state so layout width never shifts.
+      btn.setText(towerChipText(kind, def.cost));
       btn.setStyle({
         fontFamily: "Manrope, sans-serif",
-        fontSize: selected ? "15px" : "14px",
+        fontSize: `${fontSizePx}px`,
         fontStyle: "700",
-        color: "#0b3d3a",
+        color: selected ? "#0b3d3a" : "#0b3d3a",
         backgroundColor: hex,
-        padding: { x: selected ? 14 : 12, y: selected ? 12 : 10 },
+        padding: { x: paddingX, y: paddingY },
       });
-      btn.setAlpha(this.sellMode ? 0.4 : selected ? 1 : 0.55);
-      btn.setScale(selected ? 1.06 : 1);
-      if (selected) btn.setStroke("#e8dcc8", 5);
-      else btn.setStroke("#000000", 0);
+      btn.setAlpha(this.sellMode ? 0.4 : selected ? 1 : 0.5);
+      btn.setScale(scale);
+      if (selected) btn.setStroke("#e8dcc8", selectedStrokePx);
+      else btn.setStroke("#000000", unselectedStrokePx);
     }
     if (this.sellBtn) {
-      this.sellBtn.setAlpha(this.sellMode ? 1 : 0.65);
-      this.sellBtn.setScale(this.sellMode ? 1.06 : 1);
-      this.sellBtn.setText(this.sellMode ? "▸ Sell" : "Sell");
-      if (this.sellMode) this.sellBtn.setStroke("#e8dcc8", 5);
-      else this.sellBtn.setStroke("#000000", 0);
+      const selling = this.sellMode;
+      this.sellBtn.setText(SELL_CHIP_TEXT);
+      this.sellBtn.setStyle({
+        fontFamily: "Manrope, sans-serif",
+        fontSize: `${fontSizePx}px`,
+        fontStyle: "700",
+        color: "#f8faf9",
+        backgroundColor: selling ? "#78716c" : "#57534e",
+        padding: { x: paddingX, y: paddingY },
+      });
+      this.sellBtn.setAlpha(selling ? 1 : 0.65);
+      this.sellBtn.setScale(scale);
+      if (selling) this.sellBtn.setStroke("#e8dcc8", selectedStrokePx);
+      else this.sellBtn.setStroke("#000000", unselectedStrokePx);
     }
   }
 
