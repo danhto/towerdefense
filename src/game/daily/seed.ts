@@ -47,7 +47,31 @@ export interface SpawnEvent {
   kind: EnemyKind;
 }
 
-const KINDS: EnemyKind[] = ["runner", "tank", "swarm"];
+/**
+ * Wave-weighted pick — early days favor runners (bolt works), later waves
+ * lean into swarms/tanks that resist Amber Bolt and demand mixed loadouts.
+ */
+export function pickEnemyKind(
+  rng: () => number,
+  waveIndex: number,
+  waveCount: number,
+): EnemyKind {
+  const progress = waveIndex / Math.max(1, waveCount - 1);
+  const roll = rng();
+  if (progress < 0.28) {
+    if (roll < 0.68) return "runner";
+    if (roll < 0.88) return "swarm";
+    return "tank";
+  }
+  if (progress < 0.62) {
+    if (roll < 0.34) return "runner";
+    if (roll < 0.66) return "swarm";
+    return "tank";
+  }
+  if (roll < 0.16) return "runner";
+  if (roll < 0.52) return "swarm";
+  return "tank";
+}
 
 /** Pure schedule from seed — no Date / Math.random. */
 export function buildSpawnSchedule(
@@ -63,7 +87,7 @@ export function buildSpawnSchedule(
     let t = 0;
     for (let i = 0; i < count; i++) {
       t += 280 + Math.floor(rng() * 420);
-      const kind = KINDS[Math.floor(rng() * KINDS.length)]!;
+      const kind = pickEnemyKind(rng, wave, waveCount);
       events.push({ waveIndex: wave, timeMs: t, kind });
     }
   }

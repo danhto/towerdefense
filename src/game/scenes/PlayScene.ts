@@ -15,7 +15,10 @@ import {
   TUTORIAL_STEPS,
   type TutorialStepId,
 } from "../meta/tutorial";
-import { ENEMY_STATS } from "../sim/enemies";
+import {
+  ENEMY_STATS,
+  roleHintLine,
+} from "../sim/enemies";
 import {
   TOWER_DEFS,
   towerStats,
@@ -869,6 +872,14 @@ export class PlayScene extends Phaser.Scene {
       const stats = ENEMY_STATS[enemy.kind];
       this.gfx.fillStyle(stats.color, 1);
       this.gfx.fillCircle(pos.x, pos.y, enemy.kind === "tank" ? 14 : 10);
+      if (snap.elapsedMs < enemy.corrodeUntilMs) {
+        this.gfx.lineStyle(2, PALETTE.brine, 0.85);
+        this.gfx.strokeCircle(
+          pos.x,
+          pos.y,
+          enemy.kind === "tank" ? 18 : 14,
+        );
+      }
       if (enemy.nearMiss) {
         const pulseR = 18 + this.nearMissPulse * 10;
         this.gfx.lineStyle(3, PALETTE.coral, 0.55 + this.nearMissPulse * 0.4);
@@ -934,7 +945,7 @@ export class PlayScene extends Phaser.Scene {
         ? this.placeHintText
         : snap.nearMissActive
           ? "Near miss — stop them at the harbor gate!"
-          : "Build on grass beside the path · Start wave when ready",
+          : `${roleHintLine()} · Build beside the path · Start wave when ready`,
     );
     this.hint.setColor(hintActive ? "#fda4af" : "#e8dcc8");
     this.waveBtn.setVisible(snap.phase === "build");

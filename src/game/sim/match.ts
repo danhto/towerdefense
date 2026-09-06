@@ -15,7 +15,12 @@ import {
   createLives,
   type LivesState,
 } from "../systems/lives";
-import { ENEMY_STATS } from "./enemies";
+import {
+  BRINE_CORRODE_MS,
+  BRINE_CORRODE_MULT,
+  damageTakenMultiplier,
+  ENEMY_STATS,
+} from "./enemies";
 import {
   createMapLayout,
   TILE,
@@ -65,6 +70,8 @@ export interface SimEnemy {
   slowUntilMs: number;
   /** Active slow multiplier while slowed (1 = none). */
   slowFactor: number;
+  /** Brine corrode mark — amplifies bolt/burst follow-ups. */
+  corrodeUntilMs: number;
   alive: boolean;
   /** True while in the final ~10% of the path (G3 near-miss). */
   nearMiss: boolean;
@@ -352,6 +359,7 @@ export class MatchSim {
         distance: 0,
         slowUntilMs: 0,
         slowFactor: 1,
+        corrodeUntilMs: 0,
         alive: true,
         nearMiss: false,
       });
@@ -428,7 +436,7 @@ export class MatchSim {
         toY: aim.y,
         color: def.color,
       });
-      this.dealDamage(target, def.damage, def.splashRadius, def.slowFactor);
+      this.dealDamage(target, tower.kind, def.damage, def.splashRadius, def.slowFactor);
     }
   }
 
@@ -449,16 +457,28 @@ export class MatchSim {
 
   private dealDamage(
     primary: SimEnemy,
+    towerKind: TowerKind,
     damage: number,
     splash: number,
     slowFactor: number,
   ): void {
     const applyHit = (enemy: SimEnemy) => {
       if (!enemy.alive) return;
-      enemy.hp -= damage;
+      let mult = damageTakenMultiplier(enemy.kind, towerKind);
+      if (
+        towerKind !== "brine" &&
+        this.elapsedMs < enemy.corrodeUntilMs
+      ) {
+        mult *= BRINE_CORRODE_MULT;
+      }
+      const dealt = Math.max(1, Math.round(damage * mult));
+      enemy.hp -= dealt;
       if (slowFactor < 1) {
         enemy.slowUntilMs = this.elapsedMs + 900;
         enemy.slowFactor = Math.min(enemy.slowFactor, slowFactor);
+      }
+      if (towerKind === "brine") {
+        enemy.corrodeUntilMs = this.elapsedMs + BRINE_CORRODE_MS;
       }
       if (enemy.hp <= 0) {
         enemy.alive = false;

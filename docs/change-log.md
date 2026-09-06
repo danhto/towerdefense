@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Enemy resistances (anti bolt-spam)
+
+- Goal touched: Daily depth; loadout variety; late-wave tension
+- Change: Per-enemy damage taken vs bolt/brine/burst (swarms shrug bolt, tanks shrug bolt/burst, brine corrodes for follow-ups). Late waves bias toward swarm/tank. HUD + tutorial tip the role triangle.
+- Regression pack: PASS — typecheck, 66 unit, lint
+- Metrics before → after: mono-bolt clears early, struggles late without burst/brine
+- Alignment audit: PASS — still three towers; depth from matchups not kit bloat
+- Next action: Merge + Pages playtest with bolt-only vs mixed
+
 ### 2026-09-06 — ?tutorial=1 auto-opens the coach
 
 - Goal touched: PR playtest — tour must be visible from the shared link
