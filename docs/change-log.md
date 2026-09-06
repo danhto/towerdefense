@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Score card reports actual leaks
+
+- Goal touched: T8 share integrity; fair failure comprehension
+- Change: Track gate leaks (lives lost) on the match sim. Share/result cards prefer `N leak(s)` over the old near-miss-only `"no leak"` line when something actually slipped through.
+- Regression pack: pending
+- Metrics before → after: a run with a life lost no longer reads as leak-free on the score card
+- Alignment audit: PASS — near-miss % still shown when zero leaks
+- Next action: Merge + Pages confirm
+
 ### 2026-09-06 — No preselected tower + HUD clears IN
 
 - Goal touched: Tutorial friction; readable HUD; copy tone

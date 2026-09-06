@@ -15,6 +15,9 @@ export interface ShareCardPayload {
   score: number;
   /** Wall-clock clear time in ms when result is cleared; null on breach. */
   clearTimeMs: number | null;
+  /** Enemies that reached the gate (lives lost). */
+  leaks: number;
+  /** Near-miss proximity (% path left); null if nothing entered the danger band. */
   closestLeakPct: number | null;
   mode: "official" | "practice";
   /** Unique tower kinds used this run (ordered); never counts or positions. */
@@ -62,6 +65,20 @@ export function formatClearTime(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+/** Spoiler-free leak / near-miss line for share + result. */
+export function formatLeakSummary(input: {
+  leaks: number;
+  closestLeakPct: number | null;
+}): string {
+  const leaks = Math.max(0, Math.floor(input.leaks));
+  if (leaks === 1) return "1 leak";
+  if (leaks > 1) return `${leaks} leaks`;
+  if (input.closestLeakPct !== null) {
+    return `closest ${input.closestLeakPct.toFixed(0)}%`;
+  }
+  return "no leaks";
+}
+
 export function buildShareCardPayload(input: {
   dateKey: string;
   result: "cleared" | "failed";
@@ -69,6 +86,7 @@ export function buildShareCardPayload(input: {
   officialLimit: number;
   score: number;
   clearTimeMs?: number | null;
+  leaks?: number;
   closestLeakPct: number | null;
   mode: "official" | "practice";
   towerKinds?: readonly TowerKind[];
@@ -80,6 +98,7 @@ export function buildShareCardPayload(input: {
     officialLimit,
     score,
     clearTimeMs = null,
+    leaks = 0,
     closestLeakPct,
     mode,
     towerKinds = [],
@@ -88,6 +107,7 @@ export function buildShareCardPayload(input: {
   if (!dateKey) throw new Error("dateKey required");
   if (officialLimit < 1) throw new Error("officialLimit invalid");
   if (score < 0) throw new Error("score must be >= 0");
+  if (leaks < 0) throw new Error("leaks must be >= 0");
   if (clearTimeMs !== null && clearTimeMs < 0) {
     throw new Error("clearTimeMs must be >= 0");
   }
@@ -112,6 +132,7 @@ export function buildShareCardPayload(input: {
     officialLimit,
     score,
     clearTimeMs: result === "cleared" ? clearTimeMs : null,
+    leaks: Math.floor(leaks),
     closestLeakPct,
     mode,
     towerKinds: uniqueTowerKinds(towerKinds),
@@ -125,10 +146,10 @@ export function formatShareText(card: ShareCardPayload): string {
     card.mode === "practice"
       ? "practice"
       : `${card.officialAttempt}/${card.officialLimit}`;
-  const near =
-    card.closestLeakPct === null
-      ? "no leak"
-      : `closest leak ${card.closestLeakPct.toFixed(0)}%`;
+  const near = formatLeakSummary({
+    leaks: card.leaks,
+    closestLeakPct: card.closestLeakPct,
+  });
   const scoreLine =
     card.clearTimeMs !== null
       ? `${card.score}  ·  ${formatClearTime(card.clearTimeMs)} clear  ·  ${near}`

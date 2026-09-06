@@ -99,6 +99,8 @@ export interface MatchSnapshot {
   kills: number;
   /** Remaining path % at closest approach to exit (lower = closer). */
   closestLeakPct: number | null;
+  /** Enemies that reached the gate (lives lost). */
+  leaks: number;
   failReason: string | null;
   /** True when any living enemy is in the last 10% of the path. */
   nearMissActive: boolean;
@@ -179,6 +181,7 @@ export class MatchSim {
   private score = 0;
   private kills = 0;
   private closestLeakPct: number | null = null;
+  private leaks = 0;
   private failReason: string | null = null;
   private selectedTowerKind: TowerKind | null = null;
   private wavesCleared = 0;
@@ -213,6 +216,7 @@ export class MatchSim {
       speedBonus: this.speedBonus,
       kills: this.kills,
       closestLeakPct: this.closestLeakPct,
+      leaks: this.leaks,
       failReason: this.failReason,
       nearMissActive: living.some((e) => e.nearMiss),
       elapsedMs: this.elapsedMs,
@@ -407,6 +411,9 @@ export class MatchSim {
   private onLeak(enemy: SimEnemy, pathPct = 0): void {
     const result = applyLeak(this.lives, 1);
     this.lives = result.state;
+    this.leaks += 1;
+    // An actual gate breach is the closest possible approach.
+    this.closestLeakPct = 0;
     this.failReason = `A ${enemy.kind} slipped through the harbor gate`;
     this.events.push({
       type: "life_lost",

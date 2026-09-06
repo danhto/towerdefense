@@ -61,6 +61,7 @@ export class ResultScene extends Phaser.Scene {
       officialLimit: 3,
       score: snap.score,
       clearTimeMs: cleared ? snap.elapsedMs : null,
+      leaks: snap.leaks,
       closestLeakPct:
         snap.closestLeakPct === null ? null : Math.round(snap.closestLeakPct),
       mode: data.mode,
@@ -95,9 +96,13 @@ export class ResultScene extends Phaser.Scene {
     }
 
     const near =
-      snap.closestLeakPct === null
-        ? "No near-miss this run"
-        : `Closest leak pressure: ${snap.closestLeakPct.toFixed(0)}% path left`;
+      snap.leaks > 0
+        ? snap.leaks === 1
+          ? "1 enemy slipped through the gate"
+          : `${snap.leaks} enemies slipped through the gate`
+        : snap.closestLeakPct === null
+          ? "Clean hold — nothing reached the gate"
+          : `Closest pressure: ${snap.closestLeakPct.toFixed(0)}% path left`;
     this.add
       .text(width / 2, detailY, near, {
         fontFamily: "Manrope, sans-serif",
