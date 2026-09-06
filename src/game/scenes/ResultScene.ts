@@ -10,8 +10,6 @@ import { BALANCE_VERSION } from "../meta/version";
 import {
   assertNoSpoilers,
   buildShareCardPayload,
-  formatClearTime,
-  formatLoadoutHint,
   formatShareText,
 } from "../share/card";
 import {
@@ -66,62 +64,34 @@ export class ResultScene extends Phaser.Scene {
       closestLeakPct:
         snap.closestLeakPct === null ? null : Math.round(snap.closestLeakPct),
       mode: data.mode,
-      towerKinds: snap.towers.map((t) => t.kind),
+      towerKinds: snap.towerKindsUsed,
     });
     assertNoSpoilers(card);
     const shareText = formatShareText(card);
 
+    // Share text already carries clear time + loadout — avoid duplicate lines.
     this.add
-      .text(width / 2, height * 0.22, shareText, {
+      .text(width / 2, height * 0.24, shareText, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "18px",
         color: "#e8dcc8",
         align: "center",
+        lineSpacing: 6,
       })
       .setOrigin(0.5)
       .setName("shareCardText");
 
-    this.add
-      .text(
-        width / 2,
-        height * 0.30,
-        cleared
-          ? `Clear time ${formatClearTime(snap.elapsedMs)} — faster clears score higher`
-          : `Time ${formatClearTime(snap.elapsedMs)}`,
-        {
-          fontFamily: "Manrope, sans-serif",
-          fontSize: "15px",
-          color: "#e8dcc8",
-        },
-      )
-      .setOrigin(0.5)
-      .setName("clearTimeLine");
-
-    const loadout = formatLoadoutHint(
-      cleared ? "cleared" : "failed",
-      snap.towers.map((t) => t.kind),
-    );
-    if (loadout) {
-      this.add
-        .text(width / 2, height * 0.335, loadout, {
-          fontFamily: "Manrope, sans-serif",
-          fontSize: "16px",
-          color: "#a8b5a0",
-        })
-        .setOrigin(0.5)
-        .setName("loadoutLine");
-    }
-
-
+    let detailY = height * 0.40;
     if (!cleared && snap.failReason) {
       this.add
-        .text(width / 2, height * 0.34, snap.failReason, {
+        .text(width / 2, detailY, snap.failReason, {
           fontFamily: "Manrope, sans-serif",
           fontSize: "15px",
           color: "#fda4af",
         })
         .setOrigin(0.5)
         .setName("failReason");
+      detailY += height * 0.05;
     }
 
     const near =
@@ -129,16 +99,17 @@ export class ResultScene extends Phaser.Scene {
         ? "No near-miss this run"
         : `Closest leak pressure: ${snap.closestLeakPct.toFixed(0)}% path left`;
     this.add
-      .text(width / 2, height * 0.39, near, {
+      .text(width / 2, detailY, near, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "14px",
         color: "#a8b5a0",
       })
       .setOrigin(0.5)
       .setName("nearMissSummary");
+    detailY += height * 0.045;
 
     this.add
-      .text(width / 2, height * 0.43, `Balance ${balance}`, {
+      .text(width / 2, detailY, `Balance ${balance}`, {
         fontFamily: "Manrope, sans-serif",
         fontSize: "12px",
         color: "#78716c",

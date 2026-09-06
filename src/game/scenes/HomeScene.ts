@@ -29,31 +29,45 @@ export class HomeScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(PALETTE.seaTealDeep);
 
-    this.add
-      .rectangle(width / 2, height / 2, width, height, PALETTE.seaTeal, 0.35)
-      .setStrokeStyle(2, PALETTE.sage);
+    // Soft harbor wash — atmosphere without card clutter.
+    const wash = this.add.graphics();
+    wash.fillStyle(PALETTE.seaTeal, 0.28);
+    wash.fillRect(0, 0, width, height);
+    wash.lineStyle(2, PALETTE.sage, 0.4);
+    wash.strokeRect(10, 10, width - 20, height - 20);
 
-    this.add
-      .text(width / 2, height * 0.14, "Daily Hold", {
+    // Brand is the hero signal — not a secondary eyebrow.
+    const brand = this.add
+      .text(width / 2, height * 0.16, "Daily Hold", {
         fontFamily: "Fraunces, Georgia, serif",
-        fontSize: "28px",
-        color: "#a8b5a0",
+        fontSize: "52px",
+        color: "#f8faf9",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setName("homeBrand");
 
     this.add
       .text(
         width / 2,
-        height * 0.22,
+        height * 0.26,
         practiceOnly ? "Practice Waters" : "Today’s Dare",
         {
-          fontFamily: "Fraunces, Georgia, serif",
-          fontSize: "42px",
-          color: "#f8faf9",
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "22px",
+          color: "#e8dcc8",
         },
       )
       .setOrigin(0.5)
       .setName("homeTitle");
+
+    this.tweens.add({
+      targets: brand,
+      alpha: 1,
+      y: height * 0.18,
+      duration: 480,
+      ease: "Sine.easeOut",
+    });
 
     this.add
       .text(width / 2, height * 0.30, dateKey, {
@@ -114,7 +128,16 @@ export class HomeScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true })
-      .setName("startCta");
+      .setName("startCta")
+      .setAlpha(0);
+
+    this.tweens.add({
+      targets: cta,
+      alpha: 1,
+      delay: 180,
+      duration: 360,
+      ease: "Sine.easeOut",
+    });
 
     cta.on("pointerdown", () => {
       const started = startNextAttempt(dateKey);

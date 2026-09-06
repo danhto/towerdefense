@@ -34,6 +34,8 @@ function playChromeRects(): Rect[] {
   });
   const sell = estimateChipSize(SELL_CHIP_TEXT);
   chips.push({ id: "sell", width: sell.width, height: sell.height });
+  const upgrade = estimateChipSize("Upgrade $00");
+  chips.push({ id: "upgrade", width: upgrade.width, height: upgrade.height });
   const wave = estimateChipSize("Start wave");
   return layoutActionBarRow({
     chips,
@@ -69,7 +71,7 @@ describe("action bar layout (no overlaps)", () => {
     ).toBe(false);
   });
 
-  it("keeps tower / sell / start-wave chips from overlapping", () => {
+  it("keeps tower / sell / upgrade / start-wave chips from overlapping", () => {
     const rects = playChromeRects();
     const hits = findOverlaps(rects, SELECTION_LAYOUT_INVARIANTS.minGapPx);
     expect(hits).toEqual([]);
@@ -77,11 +79,11 @@ describe("action bar layout (no overlaps)", () => {
 
   it("leaves room between left cluster and Start wave", () => {
     const rects = playChromeRects();
-    const sell = rects.find((r) => r.id === "sell")!;
+    const upgrade = rects.find((r) => r.id === "upgrade")!;
     const wave = rects.find((r) => r.id === "start-wave")!;
-    expect(sell.x + sell.w + SELECTION_LAYOUT_INVARIANTS.minGapPx).toBeLessThanOrEqual(
-      wave.x,
-    );
+    expect(
+      upgrade.x + upgrade.w + SELECTION_LAYOUT_INVARIANTS.minGapPx,
+    ).toBeLessThanOrEqual(wave.x);
   });
 
   it("locks selection chrome so labels/size never change when selected", () => {

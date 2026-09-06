@@ -106,9 +106,17 @@ describe("analytics + errors (G6)", () => {
   it("buffers session_start and custom events", () => {
     trackSessionStart();
     track({ name: "share_click", surface: "result", method: "copy" });
+    track({
+      name: "tower_upgraded",
+      tower_type: "bolt",
+      tier: 2,
+      tile: "0,0",
+      elapsed_ms: 1200,
+    });
     const buf = getAnalyticsBuffer();
     expect(buf[0]?.name).toBe("session_start");
     expect(buf.some((e) => e.name === "share_click")).toBe(true);
+    expect(buf.some((e) => e.name === "tower_upgraded")).toBe(true);
   });
 
   it("buffers error reports", () => {

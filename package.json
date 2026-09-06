@@ -1,7 +1,7 @@
 {
   "name": "daily-hold",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.6",
   "type": "module",
   "description": "Daily Hold — daily-dare tower defense (web PWA)",
   "scripts": {
