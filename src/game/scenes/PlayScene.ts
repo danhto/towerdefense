@@ -651,17 +651,19 @@ export class PlayScene extends Phaser.Scene {
     const gateLabelY =
       map.gateTile.y >= MAP_ROWS - 1 ? gate.y - 20 : gate.y + 18;
 
+    // Depth above the HUD so top-edge spawn never hides under the stats panel.
+    // Sand-on-sand was invisible — use deep teal chip like a road sign.
     this.add
       .text(spawn.x, spawnLabelY, "IN", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
         fontStyle: "700",
-        color: "#0b3d3a",
-        backgroundColor: "#e8dcc8",
+        color: "#f8faf9",
+        backgroundColor: "#0b3d3a",
         padding: { x: 6, y: 3 },
       })
       .setOrigin(0.5)
-      .setDepth(12)
+      .setDepth(25)
       .setName("spawnLabel");
 
     this.add
@@ -674,7 +676,7 @@ export class PlayScene extends Phaser.Scene {
         padding: { x: 6, y: 3 },
       })
       .setOrigin(0.5)
-      .setDepth(12)
+      .setDepth(25)
       .setName("gateLabel");
   }
 
