@@ -37,6 +37,7 @@ export type AnalyticsEvent =
       result: "won" | "lost";
       score: number;
       closest_leak_pct: number | null;
+      leaks: number;
       duration_ms: number;
       attempt_n: number;
       balance_version: string;

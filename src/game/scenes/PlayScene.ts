@@ -244,6 +244,7 @@ export class PlayScene extends Phaser.Scene {
         result: snap.phase === "won" ? "won" : "lost",
         score: snap.score,
         closest_leak_pct: snap.closestLeakPct,
+        leaks: snap.leaks,
         duration_ms: snap.elapsedMs,
         attempt_n: this.sim.attemptNumber,
         balance_version: BALANCE_VERSION,

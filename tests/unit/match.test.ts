@@ -96,10 +96,27 @@ describe("match sim (G1)", () => {
       if (snap.phase === "won" || snap.phase === "lost") {
         expect(snap.phase).toBe("lost");
         expect(snap.failReason).toMatch(/harbor gate/i);
+        expect(snap.leaks).toBeGreaterThanOrEqual(1);
+        expect(snap.closestLeakPct).toBe(0);
         return;
       }
     }
     throw new Error("match did not finish");
+  });
+
+  it("counts a mid-run leak even when lives remain", () => {
+    const sim = makeSim({ startingLives: 3, waveCount: 1, startingGold: 0 });
+    expect(sim.startWave()).toBe(true);
+    for (let i = 0; i < 50_000; i++) {
+      const snap = sim.tick(100);
+      if (snap.leaks >= 1) {
+        expect(snap.lives).toBe(2);
+        expect(snap.closestLeakPct).toBe(0);
+        return;
+      }
+      if (snap.phase === "won" || snap.phase === "lost") break;
+    }
+    throw new Error("never recorded a leak");
   });
 
   it("never lets gold go negative from illegal placement attempts", () => {

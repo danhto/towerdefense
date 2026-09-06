@@ -5,6 +5,7 @@ import {
   buildShareCardPayload,
   FORBIDDEN_SHARE_KEYS,
   formatClearTime,
+  formatLeakSummary,
   formatLoadoutHint,
   formatShareText,
   uniqueTowerKinds,
@@ -60,6 +61,7 @@ describe("share card (T8)", () => {
       officialLimit: 3,
       score: 1840,
       clearTimeMs: 102_000,
+      leaks: 0,
       closestLeakPct: 6,
       mode: "official",
       towerKinds: ["burst", "bolt", "bolt", "brine"],
@@ -73,11 +75,38 @@ describe("share card (T8)", () => {
     expect(text).toContain("2026-03-05");
     expect(text).toContain("CLEARED");
     expect(text).toContain("2/3");
-    expect(text).toContain("closest leak 6%");
+    expect(text).toContain("closest 6%");
     expect(text).toContain("1:42 clear");
     expect(text).toContain("Held with 🟠  🔵  🔴");
     expect(text).not.toMatch(/speed\s*\+/i);
     expect(text).not.toMatch(/layout|placement|×\d|x\d/i);
+  });
+
+  it("reports actual gate leaks instead of no leaks", () => {
+    expect(formatLeakSummary({ leaks: 1, closestLeakPct: 0 })).toBe("1 leak");
+    expect(formatLeakSummary({ leaks: 2, closestLeakPct: 0 })).toBe("2 leaks");
+    expect(formatLeakSummary({ leaks: 0, closestLeakPct: 8 })).toBe(
+      "closest 8%",
+    );
+    expect(formatLeakSummary({ leaks: 0, closestLeakPct: null })).toBe(
+      "no leaks",
+    );
+
+    const card = buildShareCardPayload({
+      dateKey: "2026-03-05",
+      result: "cleared",
+      officialAttempt: 1,
+      officialLimit: 3,
+      score: 900,
+      clearTimeMs: 80_000,
+      leaks: 1,
+      closestLeakPct: 0,
+      mode: "official",
+      towerKinds: ["bolt"],
+    });
+    const text = formatShareText(card);
+    expect(text).toContain("1 leak");
+    expect(text).not.toContain("no leak");
   });
 
   it("never shows 4/3 for practice clears", () => {
@@ -88,6 +117,7 @@ describe("share card (T8)", () => {
       officialLimit: 3,
       score: 2100,
       clearTimeMs: 95_000,
+      leaks: 0,
       closestLeakPct: null,
       mode: "practice",
       towerKinds: ["bolt"],
@@ -98,6 +128,7 @@ describe("share card (T8)", () => {
     expect(text).not.toContain("4/3");
     expect(card.officialAttempt).toBe(3);
     expect(text).toContain("Held with 🟠");
+    expect(text).toContain("no leaks");
   });
 
   it("formats clear time as m:ss", () => {
@@ -128,6 +159,7 @@ describe("share card image (T8)", () => {
       officialLimit: 3,
       score: 1840,
       clearTimeMs: 90_000,
+      leaks: 0,
       closestLeakPct: 6,
       mode: "official",
       towerKinds: ["bolt", "brine"],
