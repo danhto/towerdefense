@@ -77,4 +77,17 @@ describe("first-run tutorial", () => {
     expect(isTutorialForced()).toBe(false);
     expect(hasCompletedTutorial()).toBe(true);
   });
+
+  it("treats #tutorial as a force signal", () => {
+    markTutorialComplete();
+    const href = "https://danhto.github.io/towerdefense/#tutorial=1";
+    Object.defineProperty(globalThis, "window", {
+      value: {
+        location: { search: "", hash: "#tutorial=1", href },
+      },
+      configurable: true,
+    });
+    expect(bootstrapTutorialFromUrl("")).toBe(true);
+    expect(isTutorialForced()).toBe(true);
+  });
 });

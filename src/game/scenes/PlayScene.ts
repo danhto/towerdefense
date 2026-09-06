@@ -9,6 +9,7 @@ import {
   tileCenter,
 } from "../sim/map";
 import {
+  bootstrapTutorialFromUrl,
   markTutorialComplete,
   shouldShowTutorial,
   TUTORIAL_STEPS,
@@ -681,9 +682,11 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private maybeStartTutorial(): void {
+    bootstrapTutorialFromUrl();
     if (!shouldShowTutorial()) return;
     this.tutorialActive = true;
     this.tutorialStep = 0;
+    document.getElementById("build-status")?.setAttribute("data-tutorial", "1");
     this.tutorialHighlight = this.add.graphics().setDepth(40);
     this.tutorialRoot = this.add.container(0, 0).setDepth(45);
     this.renderTutorialStep();
@@ -826,6 +829,7 @@ export class PlayScene extends Phaser.Scene {
   private finishTutorial(): void {
     this.tutorialActive = false;
     markTutorialComplete();
+    document.getElementById("build-status")?.setAttribute("data-tutorial", "0");
     this.tutorialRoot?.destroy(true);
     this.tutorialRoot = undefined;
     this.tutorialHighlight?.destroy();

@@ -34,6 +34,31 @@ test("starting an attempt enters the play scene", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test("?tutorial=1 auto-enters play with the coach armed", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (err) => errors.push(err.message));
+
+  // Pretend the player already finished the tour once.
+  await page.addInitScript(() => {
+    localStorage.setItem("daily-hold-tutorial-v1", "1");
+    localStorage.removeItem("daily-hold-tutorial-force-v1");
+  });
+
+  await page.goto("./?tutorial=1");
+  await expect(page.getByTestId("build-status")).toHaveText(/Play scene ready/i, {
+    timeout: 20_000,
+  });
+  await expect(page.getByTestId("build-status")).toHaveAttribute("data-tutorial", "1", {
+    timeout: 10_000,
+  });
+
+  const forced = await page.evaluate(
+    () => localStorage.getItem("daily-hold-tutorial-force-v1") === "1",
+  );
+  expect(forced).toBe(true);
+  expect(errors).toEqual([]);
+});
+
 test("burning 3 official attempts flips home to Practice (T6)", async ({ page }) => {
   await page.goto("./");
   await expect(page.getByTestId("build-status")).toHaveAttribute("data-ready", "true", {

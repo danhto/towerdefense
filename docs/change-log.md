@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — ?tutorial=1 auto-opens the coach
+
+- Goal touched: PR playtest — tour must be visible from the shared link
+- Change: `?tutorial=1` no longer stops on home; it auto-enters play and shows the coach. PlayScene also re-reads the URL. `data-tutorial` on build-status for smoke coverage.
+- Regression pack: PASS — typecheck, unit, e2e (?tutorial=1 auto-enters play)
+- Metrics before → after: shared tutorial link actually shows the overlay
+- Alignment audit: PASS — force flag still clears on Got it / Skip
+- Next action: Merge + Pages confirm with hard refresh
+
 ### 2026-09-06 — Replay tour + always-share Pages link
 
 - Goal touched: PR playtest speed; first-run tour review
