@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Fix tower-bar selection overlap
+
+- Goal touched: UX chrome readability; regression guard
+- Change: Selection highlight no longer grows chips (no ▸ / scale / padding bump) — alpha + thin sand stroke only; Sell label stays `Sell`. Added pure layout overlap tests so grow-on-select cannot regress.
+- Regression pack: PASS — typecheck, unit, lint, build, e2e
+- Metrics before → after: Burst no longer covers Sell; Sell text readable in sell mode
+- Alignment audit: PASS — chrome-only; no balance change
+- Next action: Merge + Pages confirm on phone
+
 ### 2026-09-06 — Selected tower chrome + share loadout hint
 
 - Goal touched: UX place feedback; T8 share interest without spoilers
