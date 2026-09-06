@@ -130,4 +130,25 @@ describe("match sim (G1)", () => {
     const upgraded = sim.drainEvents().filter((e) => e.type === "tower_upgraded");
     expect(upgraded).toHaveLength(1);
   });
+  it("awards speed bonus when a wave is cleared under par", () => {
+    const sim = makeSim({ startingGold: 5000, waveCount: 1 });
+    // Carpet the map so the wave dies instantly after spawns.
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        sim.selectTowerKind(col % 2 === 0 ? "bolt" : "burst");
+        sim.tryPlaceAt(col, row);
+      }
+    }
+    expect(sim.startWave()).toBe(true);
+    for (let i = 0; i < 20_000; i++) {
+      const snap = sim.tick(100);
+      if (snap.phase === "won" || snap.phase === "lost") {
+        expect(snap.phase).toBe("won");
+        expect(snap.speedBonus).toBeGreaterThan(0);
+        expect(snap.score).toBeGreaterThan(snap.speedBonus);
+        return;
+      }
+    }
+    throw new Error("match did not finish");
+  });
 });

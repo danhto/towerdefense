@@ -60,6 +60,7 @@ export class ResultScene extends Phaser.Scene {
       officialAttempt: data.attemptNumber,
       officialLimit: 3,
       score: snap.score,
+      speedBonus: snap.speedBonus,
       closestLeakPct:
         snap.closestLeakPct === null ? null : Math.round(snap.closestLeakPct),
       mode: data.mode,
@@ -76,6 +77,23 @@ export class ResultScene extends Phaser.Scene {
       })
       .setOrigin(0.5)
       .setName("shareCardText");
+
+    this.add
+      .text(
+        width / 2,
+        height * 0.30,
+        snap.speedBonus > 0
+          ? `Fast clear bonus: +${snap.speedBonus}`
+          : "Fast clear bonus: +0 — push forward for speed points",
+        {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "15px",
+          color: "#e8dcc8",
+        },
+      )
+      .setOrigin(0.5)
+      .setName("speedBonusLine");
+
 
     if (!cleared && snap.failReason) {
       this.add

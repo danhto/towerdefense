@@ -31,6 +31,7 @@ export class PlayScene extends Phaser.Scene {
   private sim!: MatchSim;
   private gfx!: Phaser.GameObjects.Graphics;
   private hud!: Phaser.GameObjects.Text;
+  private hudPanel!: Phaser.GameObjects.Graphics;
   private hint!: Phaser.GameObjects.Text;
   private nearMissBanner!: Phaser.GameObjects.Text;
   private waveBtn!: Phaser.GameObjects.Text;
@@ -76,14 +77,17 @@ export class PlayScene extends Phaser.Scene {
     const mapBottom = MAP_ROWS * TILE;
     const chromePad = 16;
 
+    this.hudPanel = this.add.graphics().setDepth(19).setName("hudPanel");
+
     this.hud = this.add
-      .text(chromePad, 12, "", {
+      .text(chromePad + 12, 18, "", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "15px",
         color: "#f8faf9",
-        lineSpacing: 8,
+        lineSpacing: 10,
       })
-      .setDepth(20);
+      .setDepth(20)
+      .setName("hudStats");
 
     this.nearMissBanner = this.add
       .text(360, MAP_ROWS * TILE * 0.42, "NEAR MISS", {
@@ -415,6 +419,22 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+
+  private layoutHudPanel(): void {
+    const bounds = this.hud.getBounds();
+    const padX = 14;
+    const padY = 10;
+    const x = bounds.x - padX;
+    const y = bounds.y - padY;
+    const w = Math.max(bounds.width + padX * 2, 280);
+    const h = bounds.height + padY * 2;
+    this.hudPanel.clear();
+    this.hudPanel.fillStyle(PALETTE.seaTealDeep, 0.92);
+    this.hudPanel.fillRoundedRect(x, y, w, h, 10);
+    this.hudPanel.lineStyle(2, PALETTE.sand, 0.9);
+    this.hudPanel.strokeRoundedRect(x, y, w, h, 10);
+  }
+
   private refreshHud(snap: MatchSnapshot): void {
     const waveLabel = Math.min(snap.waveIndex + 1, snap.waveCount);
     const modeTag = snap.mode === "practice" ? " · PRACTICE" : "";
@@ -439,11 +459,14 @@ export class PlayScene extends Phaser.Scene {
     }
     this.hud.setText(
       [
-        `${snap.phase.toUpperCase()}  Wave ${waveLabel}/${snap.waveCount}${modeTag}`,
-        `Gold ${snap.gold}   Lives ${snap.lives}   Score ${snap.score}`,
-        modeLine,
+        `${snap.phase.toUpperCase()}   WAVE  ${waveLabel}/${snap.waveCount}${modeTag}`,
+        `GOLD  ${snap.gold}     LIVES  ${snap.lives}     SCORE  ${snap.score}`,
+        snap.speedBonus > 0
+          ? `${modeLine}   ·   speed +${snap.speedBonus}`
+          : modeLine,
       ].join("\n"),
     );
+    this.layoutHudPanel();
     this.hint.setText(
       snap.nearMissActive
         ? "Near miss — stop them at the harbor gate!"

@@ -9,6 +9,8 @@ export interface ShareCardPayload {
   officialAttempt: number;
   officialLimit: number;
   score: number;
+  /** Points earned from fast wave clears (0 if none). */
+  speedBonus: number;
   closestLeakPct: number | null;
   mode: "official" | "practice";
 }
@@ -19,6 +21,8 @@ export function buildShareCardPayload(input: {
   officialAttempt: number;
   officialLimit: number;
   score: number;
+  /** Points earned from fast wave clears (0 if none). */
+  speedBonus?: number;
   closestLeakPct: number | null;
   mode: "official" | "practice";
 }): ShareCardPayload {
@@ -28,6 +32,7 @@ export function buildShareCardPayload(input: {
     officialAttempt,
     officialLimit,
     score,
+    speedBonus = 0,
     closestLeakPct,
     mode,
   } = input;
@@ -35,6 +40,7 @@ export function buildShareCardPayload(input: {
   if (!dateKey) throw new Error("dateKey required");
   if (officialLimit < 1) throw new Error("officialLimit invalid");
   if (score < 0) throw new Error("score must be >= 0");
+  if (speedBonus < 0) throw new Error("speedBonus must be >= 0");
   if (
     closestLeakPct !== null &&
     (closestLeakPct < 0 || closestLeakPct > 100)
@@ -49,6 +55,7 @@ export function buildShareCardPayload(input: {
     officialAttempt,
     officialLimit,
     score,
+    speedBonus,
     closestLeakPct,
     mode,
   };
@@ -61,11 +68,13 @@ export function formatShareText(card: ShareCardPayload): string {
     card.closestLeakPct === null
       ? "no leak"
       : `closest leak ${card.closestLeakPct.toFixed(0)}%`;
+  const speed =
+    card.speedBonus > 0 ? `speed +${card.speedBonus}` : "speed +0";
   const modeTag = card.mode === "practice" ? " (practice)" : "";
   return [
     `${card.title} — ${card.dateKey}${modeTag}`,
     `${status}  ${attempt}`,
-    `${card.score}  ·  ${near}`,
+    `${card.score}  ·  ${speed}  ·  ${near}`,
   ].join("\n");
 }
 
