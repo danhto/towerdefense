@@ -113,7 +113,6 @@ export class ResultScene extends Phaser.Scene {
     }
 
 
-
     if (!cleared && snap.failReason) {
       this.add
         .text(width / 2, height * 0.34, snap.failReason, {
