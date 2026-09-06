@@ -44,14 +44,20 @@ export function renderShareCardCanvas(
 
   ctx.fillStyle = "#a8b5a0";
   ctx.font = "500 24px Manrope, sans-serif";
-  ctx.fillText(lines[2] ?? "", SHARE_CARD_WIDTH / 2, 250);
+  ctx.fillText(lines[2] ?? "", SHARE_CARD_WIDTH / 2, 245);
+
+  if (lines[3]) {
+    ctx.fillStyle = "#e8dcc8";
+    ctx.font = "600 22px Manrope, sans-serif";
+    ctx.fillText(lines[3], SHARE_CARD_WIDTH / 2, 290);
+  }
 
   ctx.fillStyle = "#78716c";
   ctx.font = "400 16px Manrope, sans-serif";
   ctx.fillText(
     "Same dare for everyone · no layout spoilers",
     SHARE_CARD_WIDTH / 2,
-    340,
+    360,
   );
 
   return canvas;

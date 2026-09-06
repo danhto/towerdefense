@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Selected tower chrome + share loadout hint
+
+- Goal touched: UX place feedback; T8 share interest without spoilers
+- Change: Tower bar shows clear **selected** state (▸, scale, sand stroke, dim others); share/result add loadout line like `Held with Bolt · Brine` (kinds only — no counts/placements)
+- Regression pack: PASS — typecheck, 44 unit, lint, build, e2e
+- Metrics before → after: players can see what they are about to place; share stays spoiler-free but more interesting
+- Alignment audit: PASS — kinds ≠ layout; forbidden keys still block placements/screenshots
+- Next action: Merge after CI; Pages playtest
+
 ### 2026-09-06 — Fix 4/3 practice label + clear-time share
 
 - Goal touched: T6 attempt display; T8 share clarity

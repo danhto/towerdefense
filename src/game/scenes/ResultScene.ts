@@ -11,6 +11,7 @@ import {
   assertNoSpoilers,
   buildShareCardPayload,
   formatClearTime,
+  formatLoadoutHint,
   formatShareText,
 } from "../share/card";
 import {
@@ -65,6 +66,7 @@ export class ResultScene extends Phaser.Scene {
       closestLeakPct:
         snap.closestLeakPct === null ? null : Math.round(snap.closestLeakPct),
       mode: data.mode,
+      towerKinds: snap.towers.map((t) => t.kind),
     });
     assertNoSpoilers(card);
     const shareText = formatShareText(card);
@@ -94,6 +96,22 @@ export class ResultScene extends Phaser.Scene {
       )
       .setOrigin(0.5)
       .setName("clearTimeLine");
+
+    const loadout = formatLoadoutHint(
+      cleared ? "cleared" : "failed",
+      snap.towers.map((t) => t.kind),
+    );
+    if (loadout) {
+      this.add
+        .text(width / 2, height * 0.335, loadout, {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "16px",
+          color: "#a8b5a0",
+        })
+        .setOrigin(0.5)
+        .setName("loadoutLine");
+    }
+
 
 
     if (!cleared && snap.failReason) {
