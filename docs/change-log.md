@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — No preselected tower + HUD clears IN
+
+- Goal touched: Tutorial friction; readable HUD; copy tone
+- Change: Play starts with no tower selected (tutorial Next/Skip no longer places a bolt). Stats panel parks opposite the IN label. Softened matchup tip so it reads as play guidance, not a design note.
+- Regression pack: pending
+- Metrics before → after: tutorial clicks no longer spawn towers; IN and GOLD/LIVES no longer stack
+- Alignment audit: PASS — matchup teaching stays, presentation is player-facing
+- Next action: Merge + Pages confirm with ?tutorial=1
+
 ### 2026-09-06 — Enemy resistances (anti bolt-spam)
 
 - Goal touched: Daily depth; loadout variety; late-wave tension

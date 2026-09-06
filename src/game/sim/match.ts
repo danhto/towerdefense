@@ -105,7 +105,7 @@ export interface MatchSnapshot {
   elapsedMs: number;
   towers: PlacedTower[];
   enemies: SimEnemy[];
-  selectedTowerKind: TowerKind;
+  selectedTowerKind: TowerKind | null;
   mode: "official" | "practice";
   attemptNumber: number;
   /**
@@ -180,7 +180,7 @@ export class MatchSim {
   private kills = 0;
   private closestLeakPct: number | null = null;
   private failReason: string | null = null;
-  private selectedTowerKind: TowerKind = "bolt";
+  private selectedTowerKind: TowerKind | null = null;
   private wavesCleared = 0;
   private speedBonus = 0;
   private events: SimEvent[] = [];
@@ -227,7 +227,7 @@ export class MatchSim {
     };
   }
 
-  selectTowerKind(kind: TowerKind): void {
+  selectTowerKind(kind: TowerKind | null): void {
     this.selectedTowerKind = kind;
   }
 
@@ -239,6 +239,7 @@ export class MatchSim {
   }
 
   canPlaceAt(col: number, row: number): boolean {
+    if (this.selectedTowerKind === null) return false;
     if (this.phase === "won" || this.phase === "lost") return false;
     if (!this.map.isBuildable(col, row)) return false;
     if (this.towers.some((t) => t.col === col && t.row === row)) return false;
@@ -251,6 +252,7 @@ export class MatchSim {
   }
 
   tryPlaceAt(col: number, row: number): boolean {
+    if (this.selectedTowerKind === null) return false;
     if (!this.canPlaceAt(col, row)) return false;
     const def = TOWER_DEFS[this.selectedTowerKind];
     this.economy = spend(this.economy, def.cost);
