@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Fix 4/3 practice label + clear-time share
+
+- Goal touched: T6 attempt display; T8 share clarity
+- Change: Practice share/result no longer prints **4/3** (shows `practice`); drop separate speed-bonus label — show **clear time** instead (faster still feeds score quietly)
+- Regression pack: PASS — typecheck, 43 unit, lint, build, e2e
+- Metrics before → after: post-game attempt math readable; share stakes stay time-based not “bonus jargon”
+- Alignment audit: PASS — still spoiler-free; official limit remains 3
+- Next action: Deploy + human confirm practice clear card
+
 ### 2026-09-06 — Speed score + readable HUD box
 
 - Goal touched: P (shareable score stakes); UX readability over the field

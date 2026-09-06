@@ -44,4 +44,15 @@ describe("attempt gate (T6)", () => {
     expect(state.officialStarted).toBe(0);
     expect(modeForNextAttempt(state)).toBe("official");
   });
+
+  it("practice attemptNumber may exceed the official limit (share must clamp)", () => {
+    let state = createAttemptState("2026-03-05");
+    for (let i = 0; i < 3; i++) {
+      state = beginAttempt(state).state;
+    }
+    const practice = beginAttempt(state);
+    expect(practice.mode).toBe("practice");
+    expect(practice.attemptNumber).toBe(OFFICIAL_ATTEMPT_LIMIT + 1);
+    expect(practice.state.officialStarted).toBe(OFFICIAL_ATTEMPT_LIMIT);
+  });
 });

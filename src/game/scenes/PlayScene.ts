@@ -18,6 +18,7 @@ import {
   type TowerKind,
 } from "../sim/towers";
 import { tryShowBanner } from "../systems/adService";
+import { formatClearTime } from "../share/card";
 import { PALETTE } from "../theme/palette";
 
 export interface PlaySceneData {
@@ -461,9 +462,7 @@ export class PlayScene extends Phaser.Scene {
       [
         `${snap.phase.toUpperCase()}   WAVE  ${waveLabel}/${snap.waveCount}${modeTag}`,
         `GOLD  ${snap.gold}     LIVES  ${snap.lives}     SCORE  ${snap.score}`,
-        snap.speedBonus > 0
-          ? `${modeLine}   ·   speed +${snap.speedBonus}`
-          : modeLine,
+        `${modeLine}   ·   ${formatClearTime(snap.elapsedMs)}`,
       ].join("\n"),
     );
     this.layoutHudPanel();

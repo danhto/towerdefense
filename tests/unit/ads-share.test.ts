@@ -4,6 +4,7 @@ import {
   assertNoSpoilers,
   buildShareCardPayload,
   FORBIDDEN_SHARE_KEYS,
+  formatClearTime,
   formatShareText,
 } from "../../src/game/share/card";
 import { shareCardToDataUrl } from "../../src/game/share/image";
@@ -56,6 +57,7 @@ describe("share card (T8)", () => {
       officialAttempt: 2,
       officialLimit: 3,
       score: 1840,
+      clearTimeMs: 102_000,
       closestLeakPct: 6,
       mode: "official",
     });
@@ -66,12 +68,37 @@ describe("share card (T8)", () => {
     const text = formatShareText(card);
     expect(text).toContain("2026-03-05");
     expect(text).toContain("CLEARED");
+    expect(text).toContain("2/3");
     expect(text).toContain("closest leak 6%");
-    expect(text).toContain("speed +");
+    expect(text).toContain("1:42 clear");
+    expect(text).not.toMatch(/speed\s*\+/i);
     expect(text).not.toMatch(/tower|layout|placement/i);
   });
-});
 
+  it("never shows 4/3 for practice clears", () => {
+    const card = buildShareCardPayload({
+      dateKey: "2026-03-05",
+      result: "cleared",
+      officialAttempt: 4,
+      officialLimit: 3,
+      score: 2100,
+      clearTimeMs: 95_000,
+      closestLeakPct: null,
+      mode: "practice",
+    });
+    const text = formatShareText(card);
+    expect(text).toContain("CLEARED  practice");
+    expect(text).not.toMatch(/\d+\/\d+/);
+    expect(text).not.toContain("4/3");
+    expect(card.officialAttempt).toBe(3);
+  });
+
+  it("formats clear time as m:ss", () => {
+    expect(formatClearTime(0)).toBe("0:00");
+    expect(formatClearTime(1_000)).toBe("0:01");
+    expect(formatClearTime(65_000)).toBe("1:05");
+  });
+});
 
 describe("share card image (T8)", () => {
   it("builds a png data url without spoiler fields when canvas exists", () => {
@@ -81,6 +108,7 @@ describe("share card image (T8)", () => {
       officialAttempt: 2,
       officialLimit: 3,
       score: 1840,
+      clearTimeMs: 90_000,
       closestLeakPct: 6,
       mode: "official",
     });
