@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — First-run tour + daily-seeded path
+
+- Goal touched: Instant comprehension (P); daily variability for pathing + enemies
+- Change: Skippable 4-step first-run tutorial (persisted); IN/GATE labels + path chevrons; harbor path now generated from the daily seed (north→south) so each UTC day has a distinct route as well as spawn schedule. Classic path kept as fixture only.
+- Regression pack: pending
+- Metrics before → after: path shape differs day-to-day; new players get a short coach instead of a TD manual
+- Alignment audit: PASS — Wordle DNA stays on shared seed; TD needs both path + waves to vary
+- Next action: Merge + Pages confirm
+
 ### 2026-09-06 — Fix tower-bar selection overlap
 
 - Goal touched: UX chrome readability; regression guard

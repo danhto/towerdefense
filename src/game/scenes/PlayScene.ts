@@ -6,10 +6,14 @@ import {
   MAP_COLS,
   MAP_ROWS,
   TILE,
-  harborPathWorld,
-  isBuildable,
-  isPathTile,
+  tileCenter,
 } from "../sim/map";
+import {
+  hasCompletedTutorial,
+  markTutorialComplete,
+  TUTORIAL_STEPS,
+  type TutorialStepId,
+} from "../meta/tutorial";
 import { ENEMY_STATS } from "../sim/enemies";
 import {
   TOWER_DEFS,
@@ -68,6 +72,10 @@ export class PlayScene extends Phaser.Scene {
   }> = [];
   private placeHintUntil = 0;
   private placeHintText = "";
+  private tutorialStep = 0;
+  private tutorialActive = false;
+  private tutorialRoot?: Phaser.GameObjects.Container;
+  private tutorialHighlight?: Phaser.GameObjects.Graphics;
 
   constructor() {
     super("play");
@@ -85,6 +93,10 @@ export class PlayScene extends Phaser.Scene {
     this.shots.length = 0;
     this.placeHintUntil = 0;
     this.placeHintText = "";
+    this.tutorialActive = false;
+    this.tutorialStep = 0;
+    this.tutorialRoot = undefined;
+    this.tutorialHighlight = undefined;
     this.sim = new MatchSim({
       seed: data.seed,
       dateKey: data.dateKey,
@@ -156,6 +168,7 @@ export class PlayScene extends Phaser.Scene {
       })
       .setDepth(20);
     this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+      if (this.tutorialActive) return;
       if (pointer.y >= MAP_ROWS * TILE) return;
       const col = Math.floor(pointer.x / TILE);
       const row = Math.floor(pointer.y / TILE);
@@ -178,9 +191,9 @@ export class PlayScene extends Phaser.Scene {
             this.flashPlacement(col, row, true);
           } else {
             this.flashPlacement(col, row, false);
-            this.placeHintText = isBuildable(col, row)
+            this.placeHintText = this.sim.map.isBuildable(col, row)
               ? "Need more gold — or tile already held"
-              : "Path and walls are off-limits";
+              : "Place on grass beside the path — not on sand";
             this.placeHintUntil = this.time.now + 900;
             this.cameras.main.shake(90, 0.0025);
           }
@@ -194,7 +207,9 @@ export class PlayScene extends Phaser.Scene {
     tryShowBanner("combat", false);
     this.lastBannerPhase = "build";
 
+    this.addPathEndpointLabels();
     this.refreshHud(this.sim.snapshot());
+    this.maybeStartTutorial();
 
     const status = document.getElementById("build-status");
     if (status) {
@@ -478,6 +493,7 @@ export class PlayScene extends Phaser.Scene {
       .setDepth(20)
       .setName("startWaveBtn");
     this.waveBtn.on("pointerdown", () => {
+      if (this.tutorialActive) return;
       this.sim.startWave();
       this.refreshHud(this.sim.snapshot());
       this.emitSimEvents();
@@ -573,24 +589,240 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private drawBoard(): void {
+    const map = this.sim.map;
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
         const x = col * TILE;
         const y = row * TILE;
-        if (isPathTile(col, row)) this.gfx.fillStyle(PALETTE.path, 1);
-        else if (isBuildable(col, row)) this.gfx.fillStyle(PALETTE.buildable, 1);
+        if (map.isPathTile(col, row)) this.gfx.fillStyle(PALETTE.path, 1);
+        else if (map.isBuildable(col, row)) this.gfx.fillStyle(PALETTE.buildable, 1);
         else this.gfx.fillStyle(PALETTE.blocked, 1);
         this.gfx.fillRect(x + 1, y + 1, TILE - 2, TILE - 2);
       }
     }
-    const path = harborPathWorld();
-    this.gfx.lineStyle(6, PALETTE.sand, 0.9);
+    const path = map.pathWorld;
+    this.gfx.lineStyle(6, PALETTE.sand, 0.95);
     this.gfx.beginPath();
     this.gfx.moveTo(path[0]!.x, path[0]!.y);
     for (let i = 1; i < path.length; i++) {
       this.gfx.lineTo(path[i]!.x, path[i]!.y);
     }
     this.gfx.strokePath();
+
+    // Direction chevrons along the path — reads as a road, not a flat strip.
+    this.gfx.fillStyle(PALETTE.ink, 0.28);
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i]!;
+      const b = path[i + 1]!;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const ang = Math.atan2(b.y - a.y, b.x - a.x);
+      const size = 7;
+      // Manual triangle in world space
+      const c1x = mx + Math.cos(ang) * size;
+      const c1y = my + Math.sin(ang) * size;
+      const c2x = mx + Math.cos(ang + 2.5) * size;
+      const c2y = my + Math.sin(ang + 2.5) * size;
+      const c3x = mx + Math.cos(ang - 2.5) * size;
+      const c3y = my + Math.sin(ang - 2.5) * size;
+      this.gfx.fillTriangle(c1x, c1y, c2x, c2y, c3x, c3y);
+    }
+
+    // Spawn / gate markers — readable without reading the labels.
+    const spawn = tileCenter(map.spawnTile.x, map.spawnTile.y);
+    const gate = tileCenter(map.gateTile.x, map.gateTile.y);
+    this.gfx.fillStyle(PALETTE.sand, 0.95);
+    this.gfx.fillCircle(spawn.x, spawn.y, 10);
+    this.gfx.lineStyle(3, PALETTE.ink, 0.55);
+    this.gfx.strokeCircle(spawn.x, spawn.y, 10);
+    this.gfx.fillStyle(PALETTE.coral, 0.95);
+    this.gfx.fillCircle(gate.x, gate.y, 12);
+    this.gfx.lineStyle(3, PALETTE.foam, 0.9);
+    this.gfx.strokeCircle(gate.x, gate.y, 12);
+  }
+
+  private addPathEndpointLabels(): void {
+    const map = this.sim.map;
+    const spawn = tileCenter(map.spawnTile.x, map.spawnTile.y);
+    const gate = tileCenter(map.gateTile.x, map.gateTile.y);
+
+    this.add
+      .text(spawn.x, spawn.y - 18, "IN", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "13px",
+        fontStyle: "700",
+        color: "#0b3d3a",
+        backgroundColor: "#e8dcc8",
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(0.5)
+      .setDepth(12)
+      .setName("spawnLabel");
+
+    this.add
+      .text(gate.x, gate.y + 18, "GATE", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "13px",
+        fontStyle: "700",
+        color: "#f8faf9",
+        backgroundColor: "#e11d48",
+        padding: { x: 6, y: 3 },
+      })
+      .setOrigin(0.5)
+      .setDepth(12)
+      .setName("gateLabel");
+  }
+
+  private maybeStartTutorial(): void {
+    if (hasCompletedTutorial()) return;
+    this.tutorialActive = true;
+    this.tutorialStep = 0;
+    this.tutorialHighlight = this.add.graphics().setDepth(40);
+    this.tutorialRoot = this.add.container(0, 0).setDepth(45);
+    this.renderTutorialStep();
+  }
+
+  private renderTutorialStep(): void {
+    if (!this.tutorialRoot || !this.tutorialHighlight) return;
+    this.tutorialRoot.removeAll(true);
+    this.tutorialHighlight.clear();
+
+    const step = TUTORIAL_STEPS[this.tutorialStep];
+    if (!step) {
+      this.finishTutorial();
+      return;
+    }
+
+    const { width, height } = this.scale;
+    const dim = this.add.rectangle(width / 2, height / 2, width, height, 0x0b3d3a, 0.55);
+    const panelW = Math.min(520, width - 40);
+    const panel = this.add
+      .rectangle(width / 2, height * 0.72, panelW, 168, 0x0b3d3a, 0.96)
+      .setStrokeStyle(2, PALETTE.sand);
+    const stepLabel = this.add
+      .text(
+        width / 2,
+        height * 0.72 - 62,
+        `${this.tutorialStep + 1} / ${TUTORIAL_STEPS.length}`,
+        {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "12px",
+          color: "#a8b5a0",
+        },
+      )
+      .setOrigin(0.5);
+    const title = this.add
+      .text(width / 2, height * 0.72 - 38, step.title, {
+        fontFamily: "Fraunces, Georgia, serif",
+        fontSize: "26px",
+        color: "#f8faf9",
+      })
+      .setOrigin(0.5);
+    const body = this.add
+      .text(width / 2, height * 0.72 + 2, step.body, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "15px",
+        color: "#e8dcc8",
+        align: "center",
+        wordWrap: { width: panelW - 36 },
+      })
+      .setOrigin(0.5);
+    const nextLabel =
+      this.tutorialStep >= TUTORIAL_STEPS.length - 1 ? "Got it" : "Next";
+    const next = this.add
+      .text(width / 2 + 70, height * 0.72 + 52, nextLabel, {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "16px",
+        fontStyle: "700",
+        color: "#0b3d3a",
+        backgroundColor: "#e8dcc8",
+        padding: { x: 16, y: 10 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    const skip = this.add
+      .text(width / 2 - 90, height * 0.72 + 52, "Skip", {
+        fontFamily: "Manrope, sans-serif",
+        fontSize: "15px",
+        color: "#a8b5a0",
+        backgroundColor: "#123834",
+        padding: { x: 14, y: 10 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+
+    next.on("pointerdown", () => {
+      this.tutorialStep += 1;
+      if (this.tutorialStep >= TUTORIAL_STEPS.length) this.finishTutorial();
+      else this.renderTutorialStep();
+    });
+    skip.on("pointerdown", () => this.finishTutorial());
+
+    this.tutorialRoot.add([dim, panel, stepLabel, title, body, next, skip]);
+    this.drawTutorialHighlight(step.id);
+  }
+
+  private drawTutorialHighlight(id: TutorialStepId): void {
+    const g = this.tutorialHighlight;
+    if (!g) return;
+    g.clear();
+    const map = this.sim.map;
+    if (id === "path" || id === "welcome") {
+      g.lineStyle(4, PALETTE.sand, 0.95);
+      const path = map.pathWorld;
+      g.beginPath();
+      g.moveTo(path[0]!.x, path[0]!.y);
+      for (let i = 1; i < path.length; i++) g.lineTo(path[i]!.x, path[i]!.y);
+      g.strokePath();
+      const gate = tileCenter(map.gateTile.x, map.gateTile.y);
+      g.lineStyle(3, PALETTE.coral, 1);
+      g.strokeCircle(gate.x, gate.y, 22);
+    }
+    if (id === "place") {
+      // Pulse a few buildable tiles beside the path.
+      g.fillStyle(PALETTE.sand, 0.22);
+      let shown = 0;
+      for (let row = 0; row < MAP_ROWS && shown < 8; row++) {
+        for (let col = 0; col < MAP_COLS && shown < 8; col++) {
+          if (!map.isBuildable(col, row)) continue;
+          // Prefer tiles adjacent to path.
+          const nearPath =
+            map.isPathTile(col - 1, row) ||
+            map.isPathTile(col + 1, row) ||
+            map.isPathTile(col, row - 1) ||
+            map.isPathTile(col, row + 1);
+          if (!nearPath) continue;
+          g.fillRect(col * TILE + 2, row * TILE + 2, TILE - 4, TILE - 4);
+          shown += 1;
+        }
+      }
+      if (this.towerButtons.size) {
+        const btn = this.towerButtons.get("bolt");
+        if (btn) {
+          g.lineStyle(3, PALETTE.amber, 1);
+          g.strokeRoundedRect(btn.x - 4, btn.y - 4, btn.width + 8, btn.height + 8, 8);
+        }
+      }
+    }
+    if (id === "wave" && this.waveBtn) {
+      g.lineStyle(3, PALETTE.sand, 1);
+      g.strokeRoundedRect(
+        this.waveBtn.x - 4,
+        this.waveBtn.y - 4,
+        this.waveBtn.width + 8,
+        this.waveBtn.height + 8,
+        8,
+      );
+    }
+  }
+
+  private finishTutorial(): void {
+    this.tutorialActive = false;
+    markTutorialComplete();
+    this.tutorialRoot?.destroy(true);
+    this.tutorialRoot = undefined;
+    this.tutorialHighlight?.destroy();
+    this.tutorialHighlight = undefined;
   }
 
   private drawDynamic(snap: MatchSnapshot): void {
@@ -691,7 +923,7 @@ export class PlayScene extends Phaser.Scene {
         ? this.placeHintText
         : snap.nearMissActive
           ? "Near miss — stop them at the harbor gate!"
-          : "Tap grass to place · select a tower to upgrade · Start wave when ready",
+          : "Build on grass beside the path · Start wave when ready",
     );
     this.hint.setColor(hintActive ? "#fda4af" : "#e8dcc8");
     this.waveBtn.setVisible(snap.phase === "build");
