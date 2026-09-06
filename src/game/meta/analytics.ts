@@ -9,6 +9,13 @@ export type AnalyticsEvent =
       elapsed_ms: number;
     }
   | {
+      name: "tower_upgraded";
+      tower_type: string;
+      tier: number;
+      tile: string;
+      elapsed_ms: number;
+    }
+  | {
       name: "wave_started";
       wave_index: number;
       seed: number;

@@ -101,6 +101,11 @@ export interface MatchSnapshot {
   selectedTowerKind: TowerKind;
   mode: "official" | "practice";
   attemptNumber: number;
+  /**
+   * Unique tower kinds placed this run (survives sells).
+   * Used for spoiler-free share loadout — never counts or positions.
+   */
+  towerKindsUsed: TowerKind[];
 }
 
 /** Side-channel events for analytics / juice (drained by the scene). */
@@ -130,6 +135,16 @@ export type SimEvent =
       tier: TowerTier;
       col: number;
       row: number;
+    }
+  | {
+      type: "tower_fired";
+      towerType: TowerKind;
+      tier: TowerTier;
+      fromX: number;
+      fromY: number;
+      toX: number;
+      toY: number;
+      color: number;
     };
 
 export class MatchSim {
@@ -161,6 +176,8 @@ export class MatchSim {
   private wavesCleared = 0;
   private speedBonus = 0;
   private events: SimEvent[] = [];
+  /** Kinds placed at least once this run (share loadout survives sells). */
+  private readonly kindsUsed = new Set<TowerKind>();
 
   constructor(config: MatchConfig) {
     this.seed = config.seed;
@@ -195,6 +212,9 @@ export class MatchSim {
       selectedTowerKind: this.selectedTowerKind,
       mode: this.mode,
       attemptNumber: this.attemptNumber,
+      towerKindsUsed: (["bolt", "brine", "burst"] as TowerKind[]).filter((k) =>
+        this.kindsUsed.has(k),
+      ),
     };
   }
 
@@ -235,6 +255,7 @@ export class MatchSim {
       y: row * TILE + TILE / 2,
       cooldownMs: 0,
     });
+    this.kindsUsed.add(def.kind);
     this.events.push({
       type: "tower_placed",
       towerType: def.kind,
@@ -394,6 +415,17 @@ export class MatchSim {
       const target = this.findTarget(tower.x, tower.y, def.range);
       if (!target) continue;
       tower.cooldownMs = def.fireIntervalMs;
+      const aim = pointAtDistance(this.path, target.distance);
+      this.events.push({
+        type: "tower_fired",
+        towerType: tower.kind,
+        tier: tower.tier,
+        fromX: tower.x,
+        fromY: tower.y,
+        toX: aim.x,
+        toY: aim.y,
+        color: def.color,
+      });
       this.dealDamage(target, def.damage, def.splashRadius, def.slowFactor);
     }
   }

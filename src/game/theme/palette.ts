@@ -16,5 +16,3 @@ export const PALETTE = {
   buildable: 0x1a4a45,
   blocked: 0x123834,
 } as const;
-
-export type PaletteKey = keyof typeof PALETTE;

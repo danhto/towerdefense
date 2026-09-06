@@ -130,6 +130,40 @@ describe("match sim (G1)", () => {
     const upgraded = sim.drainEvents().filter((e) => e.type === "tower_upgraded");
     expect(upgraded).toHaveLength(1);
   });
+
+  it("keeps towerKindsUsed after sells for share loadout", () => {
+    const sim = makeSim({ startingGold: 500 });
+    sim.selectTowerKind("bolt");
+    expect(sim.tryPlaceAt(0, 0)).toBe(true);
+    sim.selectTowerKind("brine");
+    expect(sim.tryPlaceAt(0, 1)).toBe(true);
+    expect(sim.snapshot().towerKindsUsed).toEqual(["bolt", "brine"]);
+    expect(sim.trySellAt(0, 0)).toBe(true);
+    expect(sim.trySellAt(0, 1)).toBe(true);
+    expect(sim.snapshot().towers).toHaveLength(0);
+    expect(sim.snapshot().towerKindsUsed).toEqual(["bolt", "brine"]);
+  });
+
+  it("emits tower_fired when towers shoot", () => {
+    const sim = makeSim({ startingGold: 5000, waveCount: 1 });
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        sim.selectTowerKind("bolt");
+        sim.tryPlaceAt(col, row);
+      }
+    }
+    sim.drainEvents();
+    expect(sim.startWave()).toBe(true);
+    let fired = false;
+    for (let i = 0; i < 5_000; i++) {
+      sim.tick(50);
+      if (sim.drainEvents().some((e) => e.type === "tower_fired")) {
+        fired = true;
+        break;
+      }
+    }
+    expect(fired).toBe(true);
+  });
   it("awards speed bonus when a wave is cleared under par", () => {
     const sim = makeSim({ startingGold: 5000, waveCount: 1 });
     // Carpet the map so the wave dies instantly after spawns.
