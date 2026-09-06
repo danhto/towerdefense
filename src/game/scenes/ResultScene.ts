@@ -10,6 +10,7 @@ import { BALANCE_VERSION } from "../meta/version";
 import {
   assertNoSpoilers,
   buildShareCardPayload,
+  formatClearTime,
   formatShareText,
 } from "../share/card";
 import {
@@ -60,7 +61,7 @@ export class ResultScene extends Phaser.Scene {
       officialAttempt: data.attemptNumber,
       officialLimit: 3,
       score: snap.score,
-      speedBonus: snap.speedBonus,
+      clearTimeMs: cleared ? snap.elapsedMs : null,
       closestLeakPct:
         snap.closestLeakPct === null ? null : Math.round(snap.closestLeakPct),
       mode: data.mode,
@@ -82,9 +83,9 @@ export class ResultScene extends Phaser.Scene {
       .text(
         width / 2,
         height * 0.30,
-        snap.speedBonus > 0
-          ? `Fast clear bonus: +${snap.speedBonus}`
-          : "Fast clear bonus: +0 — push forward for speed points",
+        cleared
+          ? `Clear time ${formatClearTime(snap.elapsedMs)} — faster clears score higher`
+          : `Time ${formatClearTime(snap.elapsedMs)}`,
         {
           fontFamily: "Manrope, sans-serif",
           fontSize: "15px",
@@ -92,7 +93,7 @@ export class ResultScene extends Phaser.Scene {
         },
       )
       .setOrigin(0.5)
-      .setName("speedBonusLine");
+      .setName("clearTimeLine");
 
 
     if (!cleared && snap.failReason) {

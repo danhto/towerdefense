@@ -9,10 +9,18 @@ export interface ShareCardPayload {
   officialAttempt: number;
   officialLimit: number;
   score: number;
-  /** Points earned from fast wave clears (0 if none). */
-  speedBonus: number;
+  /** Wall-clock clear time in ms when result is cleared; null on breach. */
+  clearTimeMs: number | null;
   closestLeakPct: number | null;
   mode: "official" | "practice";
+}
+
+/** Format ms as m:ss for share / HUD clocks. */
+export function formatClearTime(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSec / 60);
+  const seconds = totalSec % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 export function buildShareCardPayload(input: {
@@ -21,8 +29,7 @@ export function buildShareCardPayload(input: {
   officialAttempt: number;
   officialLimit: number;
   score: number;
-  /** Points earned from fast wave clears (0 if none). */
-  speedBonus?: number;
+  clearTimeMs?: number | null;
   closestLeakPct: number | null;
   mode: "official" | "practice";
 }): ShareCardPayload {
@@ -32,7 +39,7 @@ export function buildShareCardPayload(input: {
     officialAttempt,
     officialLimit,
     score,
-    speedBonus = 0,
+    clearTimeMs = null,
     closestLeakPct,
     mode,
   } = input;
@@ -40,7 +47,9 @@ export function buildShareCardPayload(input: {
   if (!dateKey) throw new Error("dateKey required");
   if (officialLimit < 1) throw new Error("officialLimit invalid");
   if (score < 0) throw new Error("score must be >= 0");
-  if (speedBonus < 0) throw new Error("speedBonus must be >= 0");
+  if (clearTimeMs !== null && clearTimeMs < 0) {
+    throw new Error("clearTimeMs must be >= 0");
+  }
   if (
     closestLeakPct !== null &&
     (closestLeakPct < 0 || closestLeakPct > 100)
@@ -48,14 +57,20 @@ export function buildShareCardPayload(input: {
     throw new Error("closestLeakPct out of range");
   }
 
+  // Never display past the official limit (practice used to show 4/3).
+  const clampedAttempt =
+    mode === "practice"
+      ? officialLimit
+      : Math.min(Math.max(1, officialAttempt), officialLimit);
+
   return {
     title: "Daily Hold",
     dateKey,
     result,
-    officialAttempt,
+    officialAttempt: clampedAttempt,
     officialLimit,
     score,
-    speedBonus,
+    clearTimeMs: result === "cleared" ? clearTimeMs : null,
     closestLeakPct,
     mode,
   };
@@ -63,18 +78,23 @@ export function buildShareCardPayload(input: {
 
 export function formatShareText(card: ShareCardPayload): string {
   const status = card.result === "cleared" ? "CLEARED" : "BREACHED";
-  const attempt = `${card.officialAttempt}/${card.officialLimit}`;
+  // Practice is not a 4th official slot — don't print "4/3".
+  const attempt =
+    card.mode === "practice"
+      ? "practice"
+      : `${card.officialAttempt}/${card.officialLimit}`;
   const near =
     card.closestLeakPct === null
       ? "no leak"
       : `closest leak ${card.closestLeakPct.toFixed(0)}%`;
-  const speed =
-    card.speedBonus > 0 ? `speed +${card.speedBonus}` : "speed +0";
-  const modeTag = card.mode === "practice" ? " (practice)" : "";
+  const scoreLine =
+    card.clearTimeMs !== null
+      ? `${card.score}  ·  ${formatClearTime(card.clearTimeMs)} clear  ·  ${near}`
+      : `${card.score}  ·  ${near}`;
   return [
-    `${card.title} — ${card.dateKey}${modeTag}`,
+    `${card.title} — ${card.dateKey}`,
     `${status}  ${attempt}`,
-    `${card.score}  ·  ${speed}  ·  ${near}`,
+    scoreLine,
   ].join("\n");
 }
 
