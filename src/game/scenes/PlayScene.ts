@@ -15,10 +15,7 @@ import {
   TUTORIAL_STEPS,
   type TutorialStepId,
 } from "../meta/tutorial";
-import {
-  ENEMY_STATS,
-  roleHintLine,
-} from "../sim/enemies";
+import { ENEMY_STATS } from "../sim/enemies";
 import {
   TOWER_DEFS,
   towerStats,
@@ -35,6 +32,7 @@ import {
   type ChipSpec,
 } from "../ui/actionBarLayout";
 import { PALETTE } from "../theme/palette";
+import { hudAnchorAwayFromSpawn } from "../ui/hudLayout";
 
 export interface PlaySceneData {
   seed: number;
@@ -51,7 +49,7 @@ export class PlayScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   private nearMissBanner!: Phaser.GameObjects.Text;
   private waveBtn!: Phaser.GameObjects.Text;
-  private selectedKind: TowerKind = "bolt";
+  private selectedKind: TowerKind | null = null;
   private readonly towerButtons = new Map<TowerKind, Phaser.GameObjects.Text>();
   private sellBtn!: Phaser.GameObjects.Text;
   private sellMode = false;
@@ -80,6 +78,8 @@ export class PlayScene extends Phaser.Scene {
   private tutorialActive = false;
   private tutorialRoot?: Phaser.GameObjects.Container;
   private tutorialHighlight?: Phaser.GameObjects.Graphics;
+  /** Swallow board clicks that share a pointer with tutorial UI. */
+  private ignoreBoardThroughMs = 0;
 
   constructor() {
     super("play");
@@ -90,7 +90,7 @@ export class PlayScene extends Phaser.Scene {
     this.sellMode = false;
     this.selectedCol = null;
     this.selectedRow = null;
-    this.selectedKind = "bolt";
+    this.selectedKind = null;
     this.nearMissPulse = 0;
     this.lastNearMissActive = false;
     this.lastBannerPhase = null;
@@ -171,8 +171,9 @@ export class PlayScene extends Phaser.Scene {
         wordWrap: { width: 688 },
       })
       .setDepth(20);
-    this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
       if (this.tutorialActive) return;
+      if (this.time.now < this.ignoreBoardThroughMs) return;
       if (pointer.y >= MAP_ROWS * TILE) return;
       const col = Math.floor(pointer.x / TILE);
       const row = Math.floor(pointer.y / TILE);
@@ -187,6 +188,9 @@ export class PlayScene extends Phaser.Scene {
         if (occupied) {
           this.selectedCol = col;
           this.selectedRow = row;
+        } else if (this.selectedKind === null) {
+          this.placeHintText = "Pick a tower chip first";
+          this.placeHintUntil = this.time.now + 900;
         } else {
           this.sim.selectTowerKind(this.selectedKind);
           if (this.sim.tryPlaceAtWorld(pointer.x, pointer.y)) {
@@ -206,6 +210,7 @@ export class PlayScene extends Phaser.Scene {
       this.refreshHud(this.sim.snapshot());
       this.emitSimEvents();
     });
+
 
     // Initial build-phase banner once. Mid-wave blocks are transition-gated in update.
     tryShowBanner("combat", false);
@@ -416,7 +421,12 @@ export class PlayScene extends Phaser.Scene {
         .setDepth(20)
         .setName(`tower-${kind}`)
         .setOrigin(0, 0);
-      btn.on("pointerdown", () => {
+      btn.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
+        if (this.tutorialActive) {
+          this.ignoreBoardThroughMs = this.time.now + 250;
+          return;
+        }
+        pointer.event?.stopPropagation?.();
         this.selectedKind = kind;
         this.sellMode = false;
         this.selectedCol = null;
@@ -765,11 +775,15 @@ export class PlayScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     next.on("pointerdown", () => {
+      this.ignoreBoardThroughMs = this.time.now + 250;
       this.tutorialStep += 1;
       if (this.tutorialStep >= TUTORIAL_STEPS.length) this.finishTutorial();
       else this.renderTutorialStep();
     });
-    skip.on("pointerdown", () => this.finishTutorial());
+    skip.on("pointerdown", () => {
+      this.ignoreBoardThroughMs = this.time.now + 250;
+      this.finishTutorial();
+    });
 
     this.tutorialRoot.add([dim, panel, stepLabel, title, body, next, skip]);
     this.drawTutorialHighlight(step.id);
@@ -831,6 +845,10 @@ export class PlayScene extends Phaser.Scene {
 
   private finishTutorial(): void {
     this.tutorialActive = false;
+    this.ignoreBoardThroughMs = this.time.now + 250;
+    this.selectedKind = null;
+    this.sim.selectTowerKind(null);
+    this.refreshTowerBarSelection();
     markTutorialComplete();
     document.getElementById("build-status")?.setAttribute("data-tutorial", "0");
     this.tutorialRoot?.destroy(true);
@@ -907,6 +925,23 @@ export class PlayScene extends Phaser.Scene {
 
 
   private layoutHudPanel(): void {
+    const map = this.sim.map;
+    const spawn = tileCenter(map.spawnTile.x, map.spawnTile.y);
+    const spawnLabelY =
+      map.spawnTile.y <= 0 ? spawn.y + 20 : spawn.y - 18;
+    // Measure text first so we can park the panel opposite IN.
+    const hudW = Math.max(this.hud.width, 260);
+    const hudH = Math.max(this.hud.height, 48);
+    const anchor = hudAnchorAwayFromSpawn({
+      viewWidth: this.scale.width,
+      spawnCol: map.spawnTile.x,
+      spawnLabelY,
+      hudWidth: hudW,
+      hudHeight: hudH,
+    });
+    this.hud.setOrigin(anchor.originX, 0);
+    this.hud.setPosition(anchor.x, anchor.y);
+
     const bounds = this.hud.getBounds();
     const padX = 14;
     const padY = 10;
@@ -945,7 +980,7 @@ export class PlayScene extends Phaser.Scene {
         ? this.placeHintText
         : snap.nearMissActive
           ? "Near miss — stop them at the harbor gate!"
-          : `${roleHintLine()} · Build beside the path · Start wave when ready`,
+          : "Pick a tower, then build beside the path · Mix kinds as foes change",
     );
     this.hint.setColor(hintActive ? "#fda4af" : "#e8dcc8");
     this.waveBtn.setVisible(snap.phase === "build");

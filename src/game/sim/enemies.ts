@@ -42,5 +42,6 @@ export function damageTakenMultiplier(
 }
 
 export function roleHintLine(): string {
-  return "Bolt shreds runners · Burst clears swarms · Brine softens tanks";
+  // Soft player tip — not a design-matrix dump on the HUD.
+  return "Mix tower kinds — foes resist different shots";
 }

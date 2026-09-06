@@ -30,13 +30,18 @@ function firstPath(sim: MatchSim): { col: number; row: number } {
   return { col: sim.map.spawnTile.x, row: sim.map.spawnTile.y };
 }
 
+function placeDefault(sim: MatchSim, col: number, row: number): boolean {
+  sim.selectTowerKind("bolt");
+  return sim.tryPlaceAt(col, row);
+}
+
 describe("match sim (G1)", () => {
   it("places towers only on buildable tiles and spends gold", () => {
     const sim = makeSim();
     const before = sim.snapshot().gold;
     const grass = firstBuildable(sim);
     const path = firstPath(sim);
-    expect(sim.tryPlaceAt(grass.col, grass.row)).toBe(true);
+    expect(placeDefault(sim, grass.col, grass.row)).toBe(true);
     expect(sim.map.isBuildable(grass.col, grass.row)).toBe(true);
     expect(sim.snapshot().gold).toBeLessThan(before);
     expect(sim.tryPlaceAt(path.col, path.row)).toBe(false);
@@ -46,11 +51,21 @@ describe("match sim (G1)", () => {
   it("sells towers for a partial refund", () => {
     const sim = makeSim();
     const g = firstBuildable(sim);
-    sim.tryPlaceAt(g.col, g.row);
+    placeDefault(sim, g.col, g.row);
     const afterPlace = sim.snapshot().gold;
     expect(sim.trySellAt(g.col, g.row)).toBe(true);
     expect(sim.snapshot().gold).toBeGreaterThan(afterPlace);
     expect(sim.snapshot().towers).toHaveLength(0);
+  });
+
+  it("refuses placement until a tower kind is selected", () => {
+    const sim = makeSim();
+    const g = firstBuildable(sim);
+    expect(sim.snapshot().selectedTowerKind).toBeNull();
+    expect(sim.tryPlaceAt(g.col, g.row)).toBe(false);
+    expect(sim.snapshot().towers).toHaveLength(0);
+    sim.selectTowerKind("bolt");
+    expect(sim.tryPlaceAt(g.col, g.row)).toBe(true);
   });
 
   it("clears a short seeded run when well defended", () => {
@@ -115,7 +130,7 @@ describe("match sim (G1)", () => {
   it("emits tower_placed and wave_started events", () => {
     const sim = makeSim();
     const g = firstBuildable(sim);
-    sim.tryPlaceAt(g.col, g.row);
+    placeDefault(sim, g.col, g.row);
     const placed = sim.drainEvents().filter((e) => e.type === "tower_placed");
     expect(placed).toHaveLength(1);
     sim.startWave();
@@ -126,7 +141,7 @@ describe("match sim (G1)", () => {
   it("upgrades a tower to tier 2 and refunds invested gold on sell", () => {
     const sim = makeSim({ startingGold: 500 });
     const g = firstBuildable(sim);
-    expect(sim.tryPlaceAt(g.col, g.row)).toBe(true);
+    expect(placeDefault(sim, g.col, g.row)).toBe(true);
     const afterPlace = sim.snapshot().gold;
     expect(sim.snapshot().towers[0]!.tier).toBe(1);
     expect(sim.tryUpgradeAt(g.col, g.row)).toBe(true);
@@ -143,7 +158,7 @@ describe("match sim (G1)", () => {
   it("emits tower_upgraded events", () => {
     const sim = makeSim({ startingGold: 500 });
     const g = firstBuildable(sim);
-    sim.tryPlaceAt(g.col, g.row);
+    placeDefault(sim, g.col, g.row);
     sim.drainEvents();
     expect(sim.tryUpgradeAt(g.col, g.row)).toBe(true);
     const upgraded = sim.drainEvents().filter((e) => e.type === "tower_upgraded");
