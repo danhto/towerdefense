@@ -67,6 +67,7 @@ describe("share card (T8)", () => {
     expect(text).toContain("2026-03-05");
     expect(text).toContain("CLEARED");
     expect(text).toContain("closest leak 6%");
+    expect(text).toContain("speed +");
     expect(text).not.toMatch(/tower|layout|placement/i);
   });
 });

@@ -38,6 +38,11 @@ import {
   type TowerTier,
 } from "./towers";
 
+/** After the last spawn of a wave, this much time still earns speed credit. */
+export const WAVE_SPEED_PAR_AFTER_SPAWN_MS = 10_000;
+/** Score points per full second under the wave speed par. */
+export const SPEED_POINTS_PER_SEC = 15;
+
 export type MatchPhase = "build" | "wave" | "won" | "lost";
 
 export interface PlacedTower {
@@ -82,6 +87,8 @@ export interface MatchSnapshot {
   waveIndex: number;
   waveCount: number;
   score: number;
+  /** Cumulative speed-clear bonus (front-line risk → points if you hold). */
+  speedBonus: number;
   kills: number;
   /** Remaining path % at closest approach to exit (lower = closer). */
   closestLeakPct: number | null;
@@ -152,6 +159,7 @@ export class MatchSim {
   private failReason: string | null = null;
   private selectedTowerKind: TowerKind = "bolt";
   private wavesCleared = 0;
+  private speedBonus = 0;
   private events: SimEvent[] = [];
 
   constructor(config: MatchConfig) {
@@ -176,6 +184,7 @@ export class MatchSim {
       waveIndex: this.waveIndex,
       waveCount: this.waveCount,
       score: this.score,
+      speedBonus: this.speedBonus,
       kills: this.kills,
       closestLeakPct: this.closestLeakPct,
       failReason: this.failReason,
@@ -454,9 +463,19 @@ export class MatchSim {
     if (pending) return;
     if (this.enemies.some((e) => e.alive)) return;
 
+    // Speed bonus uses the wave we just finished (before index advances).
+    const clearedWave = this.waveIndex;
+    const lastSpawnMs = this.schedule
+      .filter((e) => e.waveIndex === clearedWave)
+      .reduce((max, e) => Math.max(max, e.timeMs), 0);
+    const parMs = lastSpawnMs + WAVE_SPEED_PAR_AFTER_SPAWN_MS;
+    const underMs = Math.max(0, parMs - this.waveTimeMs);
+    const waveSpeed = Math.floor((underMs / 1000) * SPEED_POINTS_PER_SEC);
+    this.speedBonus += waveSpeed;
+
     this.wavesCleared += 1;
     this.waveIndex += 1;
-    this.score += 100 * this.wavesCleared;
+    this.score += 100 * this.wavesCleared + waveSpeed;
     if (this.waveIndex >= this.waveCount) {
       this.phase = "won";
       this.failReason = null;

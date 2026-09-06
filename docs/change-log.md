@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Speed score + readable HUD box
+
+- Goal touched: P (shareable score stakes); UX readability over the field
+- Change: Per-wave **speed bonus** (under-par clears after last spawn) feeds total score + share card (`speed +N`); Play HUD stats in a sand-framed teal panel with labeled GOLD/LIVES/SCORE/WAVE
+- Regression pack: PASS — typecheck, 40 unit, lint, build, e2e
+- Metrics before → after: front-line risk can raise share score via faster clears; HUD no longer lost on grass
+- Alignment audit: PASS — share stays spoiler-free (no layout); speed is a number only
+- Next action: Human playtest whether front setups feel rewarding
+
 ### 2026-09-05 — Play polish: difficulty, brine contrast, chrome spacing
 
 - Goal touched: P11 (tower readability); balance feel; UX chrome
