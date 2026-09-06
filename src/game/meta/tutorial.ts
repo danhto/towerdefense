@@ -32,7 +32,7 @@ export const TUTORIAL_STEPS: readonly TutorialStep[] = [
   {
     id: "place",
     title: "Build a tower",
-    body: "Tap a colored tower chip, then tap grass to place it. Gold is spent when you place.",
+    body: "Tap a colored tower chip, then tap grass to place it. Bolt shreds runners, Burst clears swarms, Brine softens tanks — mix them as waves escalate.",
   },
   {
     id: "wave",
