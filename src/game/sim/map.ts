@@ -61,6 +61,7 @@ export function expandWaypointsToTiles(
 /**
  * Deterministic winding harbor path from a daily seed.
  * Starts at the north edge (spawn) and ends at the south edge (gate).
+ * Alternates horizontal jogs with southward progress so the route does not thrash on one row.
  */
 export function generateHarborWaypoints(seed: number): Point[] {
   const rng = createRng(seed ^ 0x61a7e4d);
@@ -69,14 +70,16 @@ export function generateHarborWaypoints(seed: number): Point[] {
   const pts: Point[] = [{ x, y }];
   const bottom = MAP_ROWS - 1;
   let guard = 0;
+  let lastWasHorizontal = false;
 
   while (y < bottom && guard++ < 48) {
     const progress = y / bottom;
-    const preferDown = rng() < 0.42 + progress * 0.4;
+    const preferDown = lastWasHorizontal || rng() < 0.38 + progress * 0.45;
     if (preferDown) {
       const step = 2 + Math.floor(rng() * 3); // 2–4
       y = Math.min(bottom, y + step);
       pts.push({ x, y });
+      lastWasHorizontal = false;
       continue;
     }
 
@@ -88,9 +91,11 @@ export function generateHarborWaypoints(seed: number): Point[] {
     if (nx === x) {
       y = Math.min(bottom, y + 2);
       pts.push({ x, y });
+      lastWasHorizontal = false;
     } else {
       x = nx;
       pts.push({ x, y });
+      lastWasHorizontal = true;
     }
   }
 

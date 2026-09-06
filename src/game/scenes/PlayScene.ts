@@ -646,8 +646,13 @@ export class PlayScene extends Phaser.Scene {
     const spawn = tileCenter(map.spawnTile.x, map.spawnTile.y);
     const gate = tileCenter(map.gateTile.x, map.gateTile.y);
 
+    // Keep labels on-canvas: spawn is north edge, gate is south edge.
+    const spawnLabelY = map.spawnTile.y <= 0 ? spawn.y + 20 : spawn.y - 18;
+    const gateLabelY =
+      map.gateTile.y >= MAP_ROWS - 1 ? gate.y - 20 : gate.y + 18;
+
     this.add
-      .text(spawn.x, spawn.y - 18, "IN", {
+      .text(spawn.x, spawnLabelY, "IN", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
         fontStyle: "700",
@@ -660,7 +665,7 @@ export class PlayScene extends Phaser.Scene {
       .setName("spawnLabel");
 
     this.add
-      .text(gate.x, gate.y + 18, "GATE", {
+      .text(gate.x, gateLabelY, "GATE", {
         fontFamily: "Manrope, sans-serif",
         fontSize: "13px",
         fontStyle: "700",
