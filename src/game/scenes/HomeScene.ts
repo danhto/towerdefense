@@ -11,6 +11,7 @@ import {
   setAdsConsent,
   setRemoveAds,
 } from "../meta/settings";
+import { hasCompletedTutorial } from "../meta/tutorial";
 import { tryShowBanner } from "../systems/adService";
 import { PALETTE } from "../theme/palette";
 
@@ -107,8 +108,8 @@ export class HomeScene extends Phaser.Scene {
         width / 2,
         height * 0.48,
         practiceOnly
-          ? "Same seed as Today’s Dare — never paywalled."
-          : "Same harbor. Same waves. Hold the gate.",
+          ? "Same path & waves as Today’s Dare — never paywalled."
+          : "New path & waves each day. Hold the gate.",
         {
           fontFamily: "Manrope, sans-serif",
           fontSize: "16px",
@@ -116,6 +117,16 @@ export class HomeScene extends Phaser.Scene {
         },
       )
       .setOrigin(0.5);
+
+    if (!hasCompletedTutorial()) {
+      this.add
+        .text(width / 2, height * 0.53, "First run includes a 20-second tour.", {
+          fontFamily: "Manrope, sans-serif",
+          fontSize: "14px",
+          color: "#a8b5a0",
+        })
+        .setOrigin(0.5);
+    }
 
     const ctaLabel = practiceOnly ? "Enter Practice" : "Start attempt";
     const cta = this.add

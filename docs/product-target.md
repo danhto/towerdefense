@@ -26,7 +26,7 @@ Working title: **Daily Hold**.
 
 ## MVP scope
 
-- 1 harbor/town path map
+- Daily-seeded harbor path (shape + waves both vary by UTC day)
 - 3 color-coded towers, 2 upgrade tiers
 - 8–12 seeded waves
 - 3 official attempts/day → further runs are Practice

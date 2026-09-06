@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { MatchSim } from "../../src/game/sim/match";
-import { isBuildable } from "../../src/game/sim/map";
 
 function makeSim(
   overrides: Partial<ConstructorParameters<typeof MatchSim>[0]> = {},
@@ -17,22 +16,39 @@ function makeSim(
   });
 }
 
+
+function firstBuildable(sim: MatchSim): { col: number; row: number } {
+  for (let row = 0; row < 16; row++) {
+    for (let col = 0; col < 12; col++) {
+      if (sim.map.isBuildable(col, row)) return { col, row };
+    }
+  }
+  throw new Error("no buildable tile");
+}
+
+function firstPath(sim: MatchSim): { col: number; row: number } {
+  return { col: sim.map.spawnTile.x, row: sim.map.spawnTile.y };
+}
+
 describe("match sim (G1)", () => {
   it("places towers only on buildable tiles and spends gold", () => {
     const sim = makeSim();
     const before = sim.snapshot().gold;
-    expect(sim.tryPlaceAt(0, 0)).toBe(true);
-    expect(isBuildable(0, 0)).toBe(true);
+    const grass = firstBuildable(sim);
+    const path = firstPath(sim);
+    expect(sim.tryPlaceAt(grass.col, grass.row)).toBe(true);
+    expect(sim.map.isBuildable(grass.col, grass.row)).toBe(true);
     expect(sim.snapshot().gold).toBeLessThan(before);
-    expect(sim.tryPlaceAt(1, 0)).toBe(false);
+    expect(sim.tryPlaceAt(path.col, path.row)).toBe(false);
     expect(sim.snapshot().towers).toHaveLength(1);
   });
 
   it("sells towers for a partial refund", () => {
     const sim = makeSim();
-    sim.tryPlaceAt(0, 0);
+    const g = firstBuildable(sim);
+    sim.tryPlaceAt(g.col, g.row);
     const afterPlace = sim.snapshot().gold;
-    expect(sim.trySellAt(0, 0)).toBe(true);
+    expect(sim.trySellAt(g.col, g.row)).toBe(true);
     expect(sim.snapshot().gold).toBeGreaterThan(afterPlace);
     expect(sim.snapshot().towers).toHaveLength(0);
   });
@@ -98,7 +114,8 @@ describe("match sim (G1)", () => {
 
   it("emits tower_placed and wave_started events", () => {
     const sim = makeSim();
-    sim.tryPlaceAt(0, 0);
+    const g = firstBuildable(sim);
+    sim.tryPlaceAt(g.col, g.row);
     const placed = sim.drainEvents().filter((e) => e.type === "tower_placed");
     expect(placed).toHaveLength(1);
     sim.startWave();
@@ -108,38 +125,52 @@ describe("match sim (G1)", () => {
 
   it("upgrades a tower to tier 2 and refunds invested gold on sell", () => {
     const sim = makeSim({ startingGold: 500 });
-    expect(sim.tryPlaceAt(0, 0)).toBe(true);
+    const g = firstBuildable(sim);
+    expect(sim.tryPlaceAt(g.col, g.row)).toBe(true);
     const afterPlace = sim.snapshot().gold;
     expect(sim.snapshot().towers[0]!.tier).toBe(1);
-    expect(sim.tryUpgradeAt(0, 0)).toBe(true);
+    expect(sim.tryUpgradeAt(g.col, g.row)).toBe(true);
     const snap = sim.snapshot();
     expect(snap.towers[0]!.tier).toBe(2);
     expect(snap.gold).toBeLessThan(afterPlace);
-    expect(sim.tryUpgradeAt(0, 0)).toBe(false); // max tier
+    expect(sim.tryUpgradeAt(g.col, g.row)).toBe(false); // max tier
     const beforeSell = sim.snapshot().gold;
-    expect(sim.trySellAt(0, 0)).toBe(true);
+    expect(sim.trySellAt(g.col, g.row)).toBe(true);
     // Refund should exceed base-only sell because upgrade gold was invested.
     expect(sim.snapshot().gold).toBeGreaterThan(beforeSell);
   });
 
   it("emits tower_upgraded events", () => {
     const sim = makeSim({ startingGold: 500 });
-    sim.tryPlaceAt(0, 0);
+    const g = firstBuildable(sim);
+    sim.tryPlaceAt(g.col, g.row);
     sim.drainEvents();
-    expect(sim.tryUpgradeAt(0, 0)).toBe(true);
+    expect(sim.tryUpgradeAt(g.col, g.row)).toBe(true);
     const upgraded = sim.drainEvents().filter((e) => e.type === "tower_upgraded");
     expect(upgraded).toHaveLength(1);
   });
 
   it("keeps towerKindsUsed after sells for share loadout", () => {
     const sim = makeSim({ startingGold: 500 });
+    const a = firstBuildable(sim);
     sim.selectTowerKind("bolt");
-    expect(sim.tryPlaceAt(0, 0)).toBe(true);
+    expect(sim.tryPlaceAt(a.col, a.row)).toBe(true);
+    // second buildable tile
+    let b = a;
+    for (let row = 0; row < 16; row++) {
+      for (let col = 0; col < 12; col++) {
+        if ((col !== a.col || row !== a.row) && sim.map.isBuildable(col, row)) {
+          b = { col, row };
+          break;
+        }
+      }
+      if (b !== a) break;
+    }
     sim.selectTowerKind("brine");
-    expect(sim.tryPlaceAt(0, 1)).toBe(true);
+    expect(sim.tryPlaceAt(b.col, b.row)).toBe(true);
     expect(sim.snapshot().towerKindsUsed).toEqual(["bolt", "brine"]);
-    expect(sim.trySellAt(0, 0)).toBe(true);
-    expect(sim.trySellAt(0, 1)).toBe(true);
+    expect(sim.trySellAt(a.col, a.row)).toBe(true);
+    expect(sim.trySellAt(b.col, b.row)).toBe(true);
     expect(sim.snapshot().towers).toHaveLength(0);
     expect(sim.snapshot().towerKindsUsed).toEqual(["bolt", "brine"]);
   });

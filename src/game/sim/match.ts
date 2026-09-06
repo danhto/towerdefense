@@ -17,10 +17,10 @@ import {
 } from "../systems/lives";
 import { ENEMY_STATS } from "./enemies";
 import {
-  harborPathWorld,
-  isBuildable,
+  createMapLayout,
   TILE,
   worldToTile,
+  type MapLayout,
 } from "./map";
 import {
   pathLength,
@@ -148,6 +148,7 @@ export type SimEvent =
     };
 
 export class MatchSim {
+  readonly map: MapLayout;
   readonly path: Point[];
   readonly pathLen: number;
   readonly schedule: SpawnEvent[];
@@ -185,7 +186,8 @@ export class MatchSim {
     this.mode = config.mode;
     this.attemptNumber = config.attemptNumber;
     this.waveCount = config.waveCount ?? 8;
-    this.path = harborPathWorld();
+    this.map = createMapLayout(config.seed);
+    this.path = this.map.pathWorld;
     this.pathLen = pathLength(this.path);
     this.schedule = buildSpawnSchedule(config.seed, this.waveCount);
     this.economy = createEconomy(config.startingGold ?? 110);
@@ -231,7 +233,7 @@ export class MatchSim {
 
   canPlaceAt(col: number, row: number): boolean {
     if (this.phase === "won" || this.phase === "lost") return false;
-    if (!isBuildable(col, row)) return false;
+    if (!this.map.isBuildable(col, row)) return false;
     if (this.towers.some((t) => t.col === col && t.row === row)) return false;
     return canAfford(this.economy, TOWER_DEFS[this.selectedTowerKind].cost);
   }
