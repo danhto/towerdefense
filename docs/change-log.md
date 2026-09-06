@@ -20,7 +20,7 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 - Goal touched: Instant comprehension (P); daily variability for pathing + enemies
 - Change: Skippable 4-step first-run tutorial (persisted); IN/GATE labels + path chevrons; harbor path now generated from the daily seed (north→south) so each UTC day has a distinct route as well as spawn schedule. Classic path kept as fixture only.
-- Regression pack: pending
+- Regression pack: PASS — typecheck, 56 unit, lint, build, e2e
 - Metrics before → after: path shape differs day-to-day; new players get a short coach instead of a TD manual
 - Alignment audit: PASS — Wordle DNA stays on shared seed; TD needs both path + waves to vary
 - Next action: Merge + Pages confirm
