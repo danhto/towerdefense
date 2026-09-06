@@ -1,5 +1,9 @@
 import type { ShareCardPayload } from "./card";
-import { formatShareText } from "./card";
+import {
+  formatShareText,
+  TOWER_KIND_COLOR,
+  uniqueTowerKinds,
+} from "./card";
 
 export const SHARE_CARD_WIDTH = 720;
 export const SHARE_CARD_HEIGHT = 420;
@@ -32,24 +36,45 @@ export function renderShareCardCanvas(
   ctx.lineWidth = 4;
   ctx.strokeRect(18, 18, SHARE_CARD_WIDTH - 36, SHARE_CARD_HEIGHT - 36);
 
-  const lines = formatShareText(card).split("\n");
+  // Typographic lines only — loadout is drawn as color dots (not kind names).
+  const lines = formatShareText(card).split("\n").slice(0, 3);
   ctx.fillStyle = "#f8faf9";
   ctx.font = "700 42px Fraunces, Georgia, serif";
   ctx.textAlign = "center";
-  ctx.fillText(lines[0] ?? "Daily Hold", SHARE_CARD_WIDTH / 2, 120);
+  ctx.fillText(lines[0] ?? "Daily Hold", SHARE_CARD_WIDTH / 2, 110);
 
   ctx.fillStyle = "#e8dcc8";
   ctx.font = "600 28px Manrope, sans-serif";
-  ctx.fillText(lines[1] ?? "", SHARE_CARD_WIDTH / 2, 190);
+  ctx.fillText(lines[1] ?? "", SHARE_CARD_WIDTH / 2, 175);
 
   ctx.fillStyle = "#a8b5a0";
   ctx.font = "500 24px Manrope, sans-serif";
-  ctx.fillText(lines[2] ?? "", SHARE_CARD_WIDTH / 2, 245);
+  ctx.fillText(lines[2] ?? "", SHARE_CARD_WIDTH / 2, 230);
 
-  if (lines[3]) {
+  const kinds = uniqueTowerKinds(card.towerKinds);
+  if (kinds.length > 0) {
+    const label = card.result === "cleared" ? "Held with" : "Ran";
     ctx.fillStyle = "#e8dcc8";
-    ctx.font = "600 22px Manrope, sans-serif";
-    ctx.fillText(lines[3], SHARE_CARD_WIDTH / 2, 290);
+    ctx.font = "600 20px Manrope, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(label, SHARE_CARD_WIDTH / 2, 280);
+
+    const radius = 14;
+    const gap = 36;
+    const totalW = (kinds.length - 1) * gap;
+    let x = SHARE_CARD_WIDTH / 2 - totalW / 2;
+    const y = 318;
+    for (const kind of kinds) {
+      ctx.beginPath();
+      ctx.fillStyle = TOWER_KIND_COLOR[kind];
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      // Foam rim so ice-blue brine stays readable on teal.
+      ctx.strokeStyle = "#f8faf9";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      x += gap;
+    }
   }
 
   ctx.fillStyle = "#78716c";
