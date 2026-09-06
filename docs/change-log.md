@@ -16,6 +16,15 @@ Use the protocol in [testing-and-metrics.md](./testing-and-metrics.md) §7. Newe
 
 ---
 
+### 2026-09-06 — Replay tour + always-share Pages link
+
+- Goal touched: PR playtest speed; first-run tour review
+- Change: Home **Replay tour** toggle + `?tutorial=1` force the coach again; Cursor rule/docs require the GitHub Pages URL after every PR
+- Regression pack: PASS — typecheck, 59 unit, lint
+- Metrics before → after: playtesters can re-open the tour without clearing storage by hand
+- Alignment audit: PASS — test-only force flag; normal players still get a one-shot tour
+- Next action: Merge + Pages confirm with `?tutorial=1`
+
 ### 2026-09-06 — First-run tour + daily-seeded path
 
 - Goal touched: Instant comprehension (P); daily variability for pathing + enemies

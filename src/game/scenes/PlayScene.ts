@@ -9,8 +9,8 @@ import {
   tileCenter,
 } from "../sim/map";
 import {
-  hasCompletedTutorial,
   markTutorialComplete,
+  shouldShowTutorial,
   TUTORIAL_STEPS,
   type TutorialStepId,
 } from "../meta/tutorial";
@@ -681,7 +681,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private maybeStartTutorial(): void {
-    if (hasCompletedTutorial()) return;
+    if (!shouldShowTutorial()) return;
     this.tutorialActive = true;
     this.tutorialStep = 0;
     this.tutorialHighlight = this.add.graphics().setDepth(40);

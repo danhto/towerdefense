@@ -1,0 +1,18 @@
+---
+description: Always include the GitHub Pages playtest URL after creating or updating a PR
+alwaysApply: true
+---
+
+# GitHub Pages link after every PR
+
+After **creating or updating any pull request** for this repo, the final user-facing response **must** include these links near the top (not buried):
+
+- **GitHub Pages (live):** https://danhto.github.io/towerdefense/
+- **Replay tutorial on Pages:** https://danhto.github.io/towerdefense/?tutorial=1
+
+Also mention briefly:
+
+1. Pages deploys from **`main` only** (see `deploy.yml`). PR code is live on Pages **after merge** unless a preview deploy exists.
+2. For tutorial review before/after merge: use `?tutorial=1` or the home **Replay tour** toggle.
+
+Do not finish a PR turn without the Pages URL.
