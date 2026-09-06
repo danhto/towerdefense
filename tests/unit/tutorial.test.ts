@@ -1,8 +1,12 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import {
+  bootstrapTutorialFromUrl,
   hasCompletedTutorial,
+  isTutorialForced,
   markTutorialComplete,
   resetTutorialProgress,
+  setTutorialForced,
+  shouldShowTutorial,
   TUTORIAL_STEPS,
 } from "../../src/game/meta/tutorial";
 
@@ -36,16 +40,41 @@ describe("first-run tutorial", () => {
 
   afterEach(() => {
     resetTutorialProgress();
+    setTutorialForced(false);
   });
 
   it("starts incomplete and has a short step list", () => {
     expect(hasCompletedTutorial()).toBe(false);
+    expect(shouldShowTutorial()).toBe(true);
     expect(TUTORIAL_STEPS.length).toBeGreaterThanOrEqual(3);
     expect(TUTORIAL_STEPS.length).toBeLessThanOrEqual(5);
   });
 
   it("persists completion", () => {
     markTutorialComplete();
+    expect(hasCompletedTutorial()).toBe(true);
+    expect(shouldShowTutorial()).toBe(false);
+  });
+
+  it("replay force clears completion and keeps the tour armed", () => {
+    markTutorialComplete();
+    setTutorialForced(true);
+    expect(hasCompletedTutorial()).toBe(false);
+    expect(isTutorialForced()).toBe(true);
+    expect(shouldShowTutorial()).toBe(true);
+  });
+
+  it("honors ?tutorial=1 for PR playtests", () => {
+    markTutorialComplete();
+    expect(bootstrapTutorialFromUrl("?tutorial=1")).toBe(true);
+    expect(isTutorialForced()).toBe(true);
+    expect(shouldShowTutorial()).toBe(true);
+  });
+
+  it("clears the force flag when the tour is completed", () => {
+    setTutorialForced(true);
+    markTutorialComplete();
+    expect(isTutorialForced()).toBe(false);
     expect(hasCompletedTutorial()).toBe(true);
   });
 });
