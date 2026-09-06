@@ -49,7 +49,7 @@ describe("harbor map layout", () => {
 
     // Lateral variety — not a straight north→south corridor.
     const xs = new Set(a.map((p) => p.x));
-    expect(xs.size).toBeGreaterThanOrEqual(2);
+    expect(xs.size).toBeGreaterThanOrEqual(3);
   });
 
   it("wires MatchSim path to the daily layout", async () => {

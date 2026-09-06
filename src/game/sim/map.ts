@@ -61,7 +61,7 @@ export function expandWaypointsToTiles(
 /**
  * Deterministic winding harbor path from a daily seed.
  * Starts at the north edge (spawn) and ends at the south edge (gate).
- * Alternates horizontal jogs with southward progress so the route does not thrash on one row.
+ * Always inserts several horizontal jogs so daily boards are not straight corridors.
  */
 export function generateHarborWaypoints(seed: number): Point[] {
   const rng = createRng(seed ^ 0x61a7e4d);
@@ -69,33 +69,29 @@ export function generateHarborWaypoints(seed: number): Point[] {
   let y = 0;
   const pts: Point[] = [{ x, y }];
   const bottom = MAP_ROWS - 1;
+  let jogs = 0;
+  const targetJogs = 2 + Math.floor(rng() * 3); // 2–4
   let guard = 0;
-  let lastWasHorizontal = false;
 
   while (y < bottom && guard++ < 48) {
-    const progress = y / bottom;
-    const preferDown = lastWasHorizontal || rng() < 0.38 + progress * 0.45;
-    if (preferDown) {
-      const step = 2 + Math.floor(rng() * 3); // 2–4
-      y = Math.min(bottom, y + step);
-      pts.push({ x, y });
-      lastWasHorizontal = false;
-      continue;
-    }
+    const downStep = 2 + Math.floor(rng() * 3); // 2–4
+    y = Math.min(bottom, y + downStep);
+    pts.push({ x, y });
+    if (y >= bottom) break;
+
+    const remaining = bottom - y;
+    const needJog = jogs < targetJogs || (remaining > 3 && rng() < 0.55);
+    if (!needJog) continue;
 
     const goLeft = rng() < 0.5;
-    const step = 2 + Math.floor(rng() * 3);
+    const step = 2 + Math.floor(rng() * 4); // 2–5
     const nx = goLeft
       ? Math.max(1, x - step)
       : Math.min(MAP_COLS - 2, x + step);
-    if (nx === x) {
-      y = Math.min(bottom, y + 2);
-      pts.push({ x, y });
-      lastWasHorizontal = false;
-    } else {
+    if (nx !== x) {
       x = nx;
       pts.push({ x, y });
-      lastWasHorizontal = true;
+      jogs += 1;
     }
   }
 
