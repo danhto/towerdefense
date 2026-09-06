@@ -75,7 +75,7 @@ describe("share card (T8)", () => {
     expect(text).toContain("2/3");
     expect(text).toContain("closest leak 6%");
     expect(text).toContain("1:42 clear");
-    expect(text).toContain("Held with Bolt · Brine · Burst");
+    expect(text).toContain("Held with 🟠  🔵  🔴");
     expect(text).not.toMatch(/speed\s*\+/i);
     expect(text).not.toMatch(/layout|placement|×\d|x\d/i);
   });
@@ -97,7 +97,7 @@ describe("share card (T8)", () => {
     expect(text).not.toMatch(/\d+\/\d+/);
     expect(text).not.toContain("4/3");
     expect(card.officialAttempt).toBe(3);
-    expect(text).toContain("Held with Bolt");
+    expect(text).toContain("Held with 🟠");
   });
 
   it("formats clear time as m:ss", () => {
@@ -112,9 +112,9 @@ describe("share card (T8)", () => {
       "burst",
     ]);
     expect(formatLoadoutHint("cleared", ["bolt", "brine"])).toBe(
-      "Held with Bolt + Brine",
+      "Held with 🟠  🔵",
     );
-    expect(formatLoadoutHint("failed", ["burst"])).toBe("Ran Burst");
+    expect(formatLoadoutHint("failed", ["burst"])).toBe("Ran 🔴");
     expect(formatLoadoutHint("cleared", [])).toBeNull();
   });
 });

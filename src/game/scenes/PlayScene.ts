@@ -676,24 +676,12 @@ export class PlayScene extends Phaser.Scene {
             (t) => t.col === this.selectedCol && t.row === this.selectedRow,
           )
         : undefined;
-    let modeLine: string;
-    if (this.sellMode) {
-      modeLine = "SELL mode — tap a tower";
-    } else if (selected) {
-      const stats = towerStats(selected.kind, selected.tier);
-      const next = upgradeCost(selected.kind, selected.tier);
-      modeLine =
-        next === null
-          ? `Selected ${stats.name} (max tier)`
-          : `Selected ${stats.name} — upgrade $${next}`;
-    } else {
-      modeLine = `Placing ${TOWER_DEFS[this.selectedKind].name} — tap grass`;
-    }
+    // Selection chrome lives on the action-bar chips — no mirror text in the HUD.
     this.hud.setText(
       [
         `${snap.phase.toUpperCase()}   WAVE  ${waveLabel}/${snap.waveCount}${modeTag}`,
         `GOLD  ${snap.gold}     LIVES  ${snap.lives}     SCORE  ${snap.score}`,
-        `${modeLine}   ·   ${formatClearTime(snap.elapsedMs)}`,
+        formatClearTime(snap.elapsedMs),
       ].join("\n"),
     );
     this.layoutHudPanel();

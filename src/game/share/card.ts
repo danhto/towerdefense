@@ -23,10 +23,18 @@ export interface ShareCardPayload {
 
 const KIND_ORDER: TowerKind[] = ["bolt", "brine", "burst"];
 
-const KIND_LABEL: Record<TowerKind, string> = {
-  bolt: "Bolt",
-  brine: "Brine",
-  burst: "Burst",
+/** Colored tower dots for share text (clipboard / plain text). */
+export const TOWER_KIND_DOT: Record<TowerKind, string> = {
+  bolt: "🟠", // Amber Bolt
+  brine: "🔵", // Mint Brine
+  burst: "🔴", // Coral Burst
+};
+
+/** Hex fills for share-card canvas dots (match in-game tower colors). */
+export const TOWER_KIND_COLOR: Record<TowerKind, string> = {
+  bolt: "#d97706",
+  brine: "#7dd3fc",
+  burst: "#e11d48",
 };
 
 /** Stable unique kinds from a run — no counts, no placement data. */
@@ -35,21 +43,15 @@ export function uniqueTowerKinds(kinds: readonly TowerKind[]): TowerKind[] {
   return KIND_ORDER.filter((k) => seen.has(k));
 }
 
-/** Spoiler-free loadout line, or null if no towers were placed. */
+/** Spoiler-free loadout line using tower color-dots (no names/counts/positions). */
 export function formatLoadoutHint(
   result: "cleared" | "failed",
   kinds: readonly TowerKind[],
 ): string | null {
   const unique = uniqueTowerKinds(kinds);
   if (unique.length === 0) return null;
-  const labels = unique.map((k) => KIND_LABEL[k]);
-  const joined =
-    labels.length === 1
-      ? labels[0]!
-      : labels.length === 2
-        ? `${labels[0]} + ${labels[1]}`
-        : labels.join(" · ");
-  return result === "cleared" ? `Held with ${joined}` : `Ran ${joined}`;
+  const dots = unique.map((k) => TOWER_KIND_DOT[k]).join("  ");
+  return result === "cleared" ? `Held with ${dots}` : `Ran ${dots}`;
 }
 
 /** Format ms as m:ss for share / HUD clocks. */
